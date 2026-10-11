@@ -37,7 +37,8 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(voice.parse("बताओ", "hi")["command"], "describe")
         self.assertEqual(voice.parse("पढ़ो", "hi")["command"], "read")
         self.assertEqual(voice.parse("मेरी बोतल कहां है", "hi"), {"command": "find", "target": "bottle"})
-        self.assertEqual(voice.parse("रुको", "hi")["command"], "stop")
+        for stop in ("रुको", "रुक जाओ", "बंद करो", "बस"):
+            self.assertEqual(voice.parse(stop, "hi"), {"command": "stop", "target": ""})
 
 
 class VocabularyTests(unittest.TestCase):

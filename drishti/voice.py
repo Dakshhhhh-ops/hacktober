@@ -30,7 +30,8 @@ COMMANDS = {
         "describe": ["बताओ", "देखो", "आसपास", "सामने"],
         "read": ["पढ़ो", "पढ़"],
         "find": ["खोजो", "ढूंढो", "ढूँढो", "कहां", "कहाँ"],
-        "stop": ["रुको", "बंद", "चुप"],
+        # Several ways to say stop: with only three, the small model missed "रुको".
+        "stop": ["रुको", "रुकिए", "रुक", "ठहरो", "बंद", "चुप", "बस", "शांत", "स्टॉप"],
         "repeat": ["दोबारा", "फिर"],
         "hindi": ["हिंदी", "हिन्दी"],
         "english": ["अंग्रेजी", "अंग्रेज़ी", "इंग्लिश"],
@@ -39,7 +40,7 @@ COMMANDS = {
 # Small words that may surround a command and carry no meaning.
 FILLERS = {
     "en": ["the", "a", "an", "my", "is", "are", "me", "for", "please", "what", "in", "of", "this", "it", "to"],
-    "hi": ["मेरा", "मेरी", "मेरे", "है", "हैं", "क्या", "यह", "को", "का", "की", "के", "में"],
+    "hi": ["मेरा", "मेरी", "मेरे", "है", "हैं", "क्या", "यह", "को", "का", "की", "के", "में", "करो", "जाओ"],
 }
 # Things a person might ask to find, beyond the hazard glossary.
 EXTRA_OBJECTS = ["bottle", "water", "phone", "keys", "key", "bag", "wallet", "glasses", "shoe", "shoes",

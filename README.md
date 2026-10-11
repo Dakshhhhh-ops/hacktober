@@ -188,8 +188,11 @@ voice on once (the **Voice commands** button, or **V**), then speak:
 | "repeat" | Says the last answer again |
 | "Hindi" / "English" | Switches language |
 
-In Hindi mode the Hindi words work too (बताओ, पढ़ो, खोजो, रुको, दोबारा), and the English
-ones keep working.
+In Hindi mode Hindi commands work too, and the English ones keep working. Hindi
+recognition with the small model is less reliable than English, especially for single
+short words. In a test with synthesised speech these were recognised: बताओ (describe),
+पढ़ो (read), "बोतल कहां है" (find), बस / "बंद करो" / "रुक जाओ" (stop), दोबारा (repeat)
+and हिंदी. On their own, रुको and खोजो were sometimes missed.
 
 Speech is recognised on your machine with [Vosk](https://alphacephei.com/vosk/). The
 browser's own speech recognition is deliberately not used, because it sends audio to a
