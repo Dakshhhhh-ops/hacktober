@@ -1,4 +1,25 @@
 image,hazards_true,text_true
+escalators.jpg,escalator|escalators|moving stairs|stairs,
+open_manhole.jpg,open manhole|manhole|hole|sewer|pit;?traffic cone|cone;?car|cars|vehicle|vehicles,
+plastic_barriers.jpg,barrier|barriers|barricade|fence|fencing;?person|pedestrian|man,
+pothole_1.jpg,pothole|hole|crater|damaged road;?glove|shoe|debris|object|puddle|water,
+pothole_2.jpg,pothole|hole|sinkhole|crater|collapsed road;?barrier|block|debris|water|puddle,
+puddle_station.jpg,wet floor|puddle|water|slippery|flooded floor;?person|people;?bench|counter|barrier|railing|door|doors,
+sidewalk_obstruction.jpg,bicycle|bicycles|bike|bikes;?sign|stand|pole|post|board;?person|people|pedestrian|pedestrians;?road|car|cars|vehicle,
+stair_edge_mall.jpg,step|steps|stairs|stair|staircase|curb|kerb|ledge|edge|drop;?tactile|paving|railing,
+stairs_down.jpg,stairs|staircase|steps|stairway;?person|people|pedestrians;?railing|railings|handrail,
+stairs_pedway.jpg,stairs|staircase|steps|stairway;?person|people|pedestrians;?wall|walls|railing|handrail|car|vehicle,
+trip_hazard_pavement.jpg,uneven pavement|uneven|broken pavement|broken|cracked|crack|raised|trip hazard|damaged pavement|loose;?wet|puddle|water;?railing|fence|leaves,
+wet_floor_sign_1.jpg,wet floor|slippery floor|slippery|wet floor sign|caution sign|sign;?plant|kiosk|pillar,CAUTION WET FLOOR ATTENTION PLANCHER MOUILLÉ
+wet_floor_sign_2.jpg,wet floor|slippery floor|slippery|wet floor sign|caution sign|sign,CAUTION Wet Floor ATTENTION Sol Humide CUIDADO Piso Mojado
+wet_floor_sign_3.jpg,wet floor|slippery floor|slippery|wet floor sign|caution sign|sign;bucket|pail|bin,
+empty_hallway_1.jpg,?open door|door|doorway;?mat|floor mat|grate|hatch|cover,
+empty_hallway_2.jpg,?chair|chairs|seating|table|tables|furniture,
+empty_hallway_exit.jpg,?door|doors,EXIT
+empty_office.jpg,?door|open door|doorway,
+exit_sign.jpg,n/a,EXIT
+fire_exit_sign.jpg,n/a,EXIT
+sign_subway.jpg,n/a,"1715 02 Down the stairs for subway to platforms 3 or 4 for trains to PUTNEY, WIMBLEDON, RICHMOND, KEW, HAMMERSMITH, EALING"
 synthetic_exit_sign.png,n/a,EXIT
 synthetic_wet_floor.png,n/a,CAUTION WET FLOOR
 synthetic_platform.png,n/a,Platform 2

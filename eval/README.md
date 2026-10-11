@@ -14,8 +14,9 @@ Ollama must be running with the configured model. Nothing here is mocked.
 
 ## Label format
 
-`labels.csv` has three columns. The labels are written by a person looking at the photo;
-they are the ground truth. The model's answers are never used as labels.
+`labels.csv` has three columns. The labels were written by inspecting each image before
+the vision model under test was run on it. They are the ground truth; the model's answers
+are never used as labels.
 
 | Column | Meaning |
 | --- | --- |
@@ -34,6 +35,17 @@ medicine_strip.jpg,,Paracetamol Tablets IP 500 mg
 ```
 
 Use the first synonym as the canonical name; it is the one shown in the results.
+
+A hazard that starts with `?` is **optional**: something that is reasonable to mention but
+that a careful guide would not have to warn about, such as a traffic cone next to an open
+manhole. Reporting it is not a false alarm, and not reporting it is not a miss.
+
+```
+open_manhole.jpg,open manhole|manhole|hole;?traffic cone|cone;?car|vehicle,
+```
+
+A hazard is required when it is in or directly beside the walking path. A scene whose
+only labels are optional counts as hazard-free.
 
 ## Matching rules
 
@@ -63,15 +75,24 @@ retry if one happened. The median and the 95th percentile (nearest rank) are rep
 
 ## The image set
 
-- `synthetic_*.png` are **rendered text, not photographs**, made by `make_synthetic.py`.
-  They are a fixed reading test with some deliberately hard cases (small, blurred, tilted,
-  low contrast) and are marked `n/a` for hazards.
-- Every other image is a photograph taken by the author at the event and labelled by hand.
+30 images, fixed and committed to this repository:
+
+- **21 photographs from Wikimedia Commons**, fetched by `fetch_commons.py` at about 800 px
+  wide. They were chosen by searching for common walking hazards (stairs, wet floors,
+  potholes, an open manhole, barriers, obstructions) plus clear corridors and signs. Each
+  keeps its own licence; authors and licences are listed in [SOURCES.md](SOURCES.md).
+  14 show a required hazard, 4 are hazard-free scenes, and 3 are signs used only for
+  reading.
+- **9 `synthetic_*.png` images** are rendered text, not photographs, made by
+  `make_synthetic.py`. They are a fixed reading test with some deliberately hard cases
+  (small, blurred, tilted, low contrast) and are marked `n/a` for hazards.
+
+The photographs were picked because they clearly show a hazard, so this set is easier
+than real life: no night scenes, no motion blur, no hazards half out of frame.
 
 ## Limits of this evaluation
 
-- The image set is small and was collected by the author in one place. The numbers
-  describe this set only.
+- The image set is small and curated. The numbers describe this set only.
 - Label matching is by words. A correct warning phrased very differently from the label
   can be scored as a miss plus a false alarm; check `results.json` when a number looks odd.
 - Whether a hazard was confidently *absent* is not measured, and the model's own

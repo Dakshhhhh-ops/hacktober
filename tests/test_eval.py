@@ -47,6 +47,15 @@ class MatchingTests(unittest.TestCase):
         _, missed, _ = run_eval.match_hazards([["chair"], ["chair"]], ["chair"])
         self.assertEqual(missed, ["chair"])
 
+    def test_an_optional_label_is_neither_a_miss_nor_a_false_alarm(self):
+        labels = run_eval.parse_hazard_labels("open manhole|manhole;?traffic cone|cone;?car")
+        self.assertEqual(run_eval.match_hazards(labels, ["open manhole", "orange cone"]),
+                         (["open manhole"], [], []))
+        self.assertEqual(run_eval.match_hazards(labels, ["open manhole"]),
+                         (["open manhole"], [], []))
+        self.assertEqual(run_eval.match_hazards(labels, ["cone", "dog"]),
+                         ([], ["open manhole"], ["dog"]))
+
     def test_text_similarity_ignores_case_and_punctuation(self):
         self.assertEqual(run_eval.text_similarity("CAUTION: Wet Floor!", ["caution", "wet floor"]), 1.0)
         self.assertLess(run_eval.text_similarity("Paracetamol 500 mg", ["Platform 2"]), 0.5)

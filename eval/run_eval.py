@@ -53,18 +53,24 @@ def parse_hazard_labels(cell: str) -> list[list[str]]:
 def match_hazards(labels: list[list[str]], predicted: list[str]) -> tuple[list[str], list[str], list[str]]:
     """Return (detected labels, missed labels, false-alarm predictions).
 
-    Each prediction can satisfy at most one label and each label needs one prediction.
+    Each prediction can satisfy at most one required label and each label needs one
+    prediction. A label whose first synonym starts with "?" is optional: reporting it is
+    not a false alarm and not reporting it is not a miss.
     """
+    required = [s for s in labels if not s[0].startswith("?")]
+    optional = [[w.lstrip("?").strip() for w in s] for s in labels if s[0].startswith("?")]
     unused = list(predicted)
     detected, missed = [], []
-    for synonyms in labels:
+    for synonyms in required:
         hit = next((p for p in unused if any(phrases_match(s, p) for s in synonyms)), None)
         if hit is None:
             missed.append(synonyms[0])
         else:
             detected.append(synonyms[0])
             unused.remove(hit)
-    return detected, missed, unused
+    false_alarms = [p for p in unused
+                    if not any(phrases_match(s, p) for synonyms in optional for s in synonyms)]
+    return detected, missed, false_alarms
 
 
 def text_similarity(truth: str, predicted_lines: list[str]) -> float:
@@ -91,7 +97,9 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[
         labels = parse_hazard_labels(hazard_cell) if score_hazards else []
         text_true = (row.get("text_true") or "").strip()
         item = {"image": name, "hazards_scored": score_hazards,
-                "hazards_true": [s[0] for s in labels], "text_true": text_true,
+                "hazards_true": [s[0] for s in labels if not s[0].startswith("?")],
+                "hazards_optional": [s[0].lstrip("?") for s in labels if s[0].startswith("?")],
+                "text_true": text_true,
                 "hazards_predicted": [], "detected": [], "missed": [], "false_alarms": [],
                 "failed": False, "error": "", "latencies_ms": []}
         results.append(item)

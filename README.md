@@ -174,7 +174,8 @@ Shortcuts are off while you are typing in the Find box.
 .venv\Scripts\python eval/run_eval.py
 ```
 
-The label format, matching rules and metric definitions are in
+The set is 30 fixed images: 21 openly licensed photographs from Wikimedia Commons and 9
+rendered text images. The label format, matching rules and metric definitions are in
 [eval/README.md](eval/README.md). Results from the last run:
 
 <!-- EVAL-RESULTS-START -->
@@ -279,6 +280,8 @@ not offer to translate it through a cloud service.
     [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/), which does not
     allow commercial use.
 - **FastAPI** and **Pydantic**: MIT. **Uvicorn**: BSD-3-Clause.
+- **Evaluation photographs** in `eval/images/`: from Wikimedia Commons under CC0, CC BY,
+  CC BY-SA or public domain. Authors and licences are in [eval/SOURCES.md](eval/SOURCES.md).
 
 This is a description of the licences as published, not legal advice.
 
