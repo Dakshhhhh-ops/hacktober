@@ -170,6 +170,29 @@ at all, `espeak-ng` is used when it is on the PATH.
 Open http://127.0.0.1:8000 and allow camera access. The server listens on this machine
 only. The first description after starting is slower because the model is being loaded.
 
+### Use a phone as the camera
+
+```
+.venv\Scripts\python -m drishti --phone
+```
+
+The model still runs on the computer; the phone is only the camera, the screen and the
+speaker. Nothing goes to the internet.
+
+1. Put the phone and the computer on the same network. The phone's own hotspot works, and
+   it does not need mobile data.
+2. On the phone, open the `https://...:8443` address the command prints.
+3. The browser warns that the certificate is not trusted. That is expected: phone browsers
+   only allow the camera over HTTPS, so the command makes its own certificate on your
+   computer. Choose Advanced (or Show Details), then proceed to the site.
+4. Allow the camera, then tap the picture to describe. On phones that support it, the
+   phone vibrates when there is a warning.
+
+Phone mode listens on the whole local network with no login, so anyone on that network
+can open the page while it is running. Prefer a private hotspot to public Wi-Fi and stop
+it with Ctrl+C afterwards. It needs `openssl`, which Git for Windows includes. If the page
+does not load, allow Python through the firewall when Windows asks.
+
 ## 13. Keyboard shortcuts
 
 | Key | Action |

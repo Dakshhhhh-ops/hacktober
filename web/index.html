@@ -27,10 +27,11 @@
   <main>
     <div class="left">
       <section class="camera" aria-label="Camera">
-        <div class="camera-frame">
+        <div id="camera-frame" class="camera-frame" role="button" tabindex="0" aria-label="Describe now">
           <video id="video" autoplay playsinline muted aria-label="Live camera preview"></video>
           <span class="badge live" aria-hidden="true">● <span data-i18n="live">Live</span></span>
           <span id="mode-badge" class="badge mode" aria-hidden="true">Surroundings</span>
+          <span class="badge tap" aria-hidden="true" data-i18n="tapHint">Tap the picture to describe</span>
         </div>
         <p id="camera-note" class="note" hidden></p>
       </section>

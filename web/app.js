@@ -15,7 +15,8 @@ const TEXT = {
     autoNote: "Auto-monitor is experimental. It only looks again when the picture changes, so it can miss things. It is not continuous hazard detection.",
     fallbackNote: "Rough description. The model's structured answer was invalid, so no hazards could be checked.",
     disclaimer: "DrishtiAI is an experimental aid. It can be wrong or miss hazards. It does not replace a cane, a guide dog or a human guide.",
-    ready: "Ready. Press Space to describe.", looking: "Looking…", speaking: "Speaking…",
+    ready: "Ready. Press Space to describe.", readyTouch: "Ready. Tap the picture to describe.",
+    looking: "Looking…", speaking: "Speaking…",
     spoken: "Done.", stopped: "Speech stopped.", queued: "One moment, finishing the current look.",
     nothingNew: "Nothing new to say.", modeNow: "Mode:", autoOn: "Auto-monitor on.", autoOff: "Auto-monitor off.",
     needTarget: "Type what you are looking for, then press Enter.",
@@ -29,6 +30,7 @@ const TEXT = {
     left: "Left", right: "Right", ahead: "Ahead", below: "Below",
     near: "near", mid: "mid distance", far: "far",
     modelTime: "model", roundTrip: "round trip", retries: "retries",
+    tapHint: "Tap the picture to describe",
   },
   hi: {
     tagline: "ऑफ़लाइन सहायक जो बताता है कि आपके सामने क्या है",
@@ -43,7 +45,8 @@ const TEXT = {
     autoNote: "ऑटो-निगरानी प्रयोगात्मक है। यह तभी दोबारा देखती है जब तस्वीर बदलती है, इसलिए चीज़ें छूट सकती हैं। यह लगातार ख़तरा पहचानने की सुविधा नहीं है।",
     fallbackNote: "मोटा विवरण। मॉडल का उत्तर सही ढाँचे में नहीं था, इसलिए ख़तरों की जाँच नहीं हो सकी।",
     disclaimer: "DrishtiAI एक प्रयोगात्मक सहायक है। यह ग़लत हो सकता है या ख़तरे छोड़ सकता है। यह छड़ी, गाइड डॉग या इंसानी मदद की जगह नहीं ले सकता।",
-    ready: "तैयार। बताने के लिए Space दबाएँ।", looking: "देख रहा हूँ…", speaking: "बोल रहा हूँ…",
+    ready: "तैयार। बताने के लिए Space दबाएँ।", readyTouch: "तैयार। बताने के लिए तस्वीर पर टैप करें।",
+    looking: "देख रहा हूँ…", speaking: "बोल रहा हूँ…",
     spoken: "हो गया।", stopped: "आवाज़ रोक दी।", queued: "एक पल, अभी देख रहा हूँ।",
     nothingNew: "कुछ नया नहीं है।", modeNow: "मोड:", autoOn: "ऑटो-निगरानी चालू।", autoOff: "ऑटो-निगरानी बंद।",
     needTarget: "लिखें कि क्या खोजना है, फिर Enter दबाएँ।",
@@ -57,13 +60,15 @@ const TEXT = {
     left: "बाईं ओर", right: "दाईं ओर", ahead: "सामने", below: "नीचे",
     near: "पास", mid: "थोड़ी दूर", far: "दूर",
     modelTime: "मॉडल", roundTrip: "कुल समय", retries: "दोबारा कोशिश",
+    tapHint: "बताने के लिए तस्वीर पर टैप करें",
   },
 };
 const ARROWS = { left: "←", right: "→", ahead: "↑", below: "↓" };
 
 const $ = (id) => document.getElementById(id);
 const els = {
-  video: $("video"), cameraNote: $("camera-note"), modelState: $("model-state"),
+  video: $("video"), cameraFrame: $("camera-frame"), cameraNote: $("camera-note"),
+  modelState: $("model-state"),
   modeBadge: $("mode-badge"), findRow: $("find-row"), target: $("target"),
   describe: $("describe"), stop: $("stop"), auto: $("auto"), volume: $("volume"),
   status: $("status"), hazards: $("hazards"), hazardList: $("hazard-list"),
@@ -93,6 +98,34 @@ const state = {
 };
 
 const audio = new Audio();
+let audioUnlocked = false;
+
+// A tenth of a second of silence as a WAV file (8 kHz, 16-bit, mono).
+function silentClip() {
+  const samples = 800;
+  const view = new DataView(new ArrayBuffer(44 + samples * 2));
+  const ascii = (offset, text) => [...text].forEach((ch, i) => view.setUint8(offset + i, ch.charCodeAt(0)));
+  ascii(0, "RIFF"); view.setUint32(4, 36 + samples * 2, true); ascii(8, "WAVEfmt ");
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, 8000, true); view.setUint32(28, 16000, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  ascii(36, "data"); view.setUint32(40, samples * 2, true);
+  return URL.createObjectURL(new Blob([view], { type: "audio/wav" }));
+}
+
+// Phone browsers only let a page play sound that started from a touch, and the real speech
+// arrives seconds after the tap. Playing silence on the first touch unlocks the player.
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  audio.src = silentClip();
+  audio.play().catch(() => {});
+}
+
+// A short buzz on phones that support it (most Android browsers). Ignored elsewhere.
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
 const frameCanvas = document.createElement("canvas");
 const thumbCanvas = document.createElement("canvas");
 thumbCanvas.width = thumbCanvas.height = THUMB_SIZE;
@@ -129,6 +162,7 @@ function applyLanguage() {
     button.setAttribute("aria-pressed", String(button.dataset.lang === state.lang));
   }
   els.modeBadge.textContent = t(state.mode);
+  els.cameraFrame.setAttribute("aria-label", t("describe"));
   showVoices();
   showModel();
 }
@@ -231,6 +265,7 @@ async function describe({ auto = false } = {}) {
   }
 
   state.busy = true;
+  if (!auto) vibrate(40);  // confirms the tap was registered
   els.describe.setAttribute("aria-busy", "true");
   if (!auto) stopSpeech(false);
   setStatus(t("looking"), "busy");
@@ -268,6 +303,7 @@ async function describe({ auto = false } = {}) {
     setStatus(t("nothingNew"), "done");
     return;
   }
+  if (data.hazards.length > 0) vibrate([250, 120, 250]);  // a warning can be felt as well as heard
   show(data, roundTripMs);
   await speak(data);
 }
@@ -464,13 +500,21 @@ async function checkHealth() {
 for (const button of els.modeButtons) button.addEventListener("click", () => setMode(button.dataset.mode));
 for (const button of els.langButtons) button.addEventListener("click", () => setLanguage(button.dataset.lang));
 els.describe.addEventListener("click", () => describe());
+// The whole camera picture is a Describe button: a large target that needs no aiming.
+els.cameraFrame.addEventListener("click", () => describe());
+els.cameraFrame.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") describe();
+});
+document.addEventListener("pointerdown", unlockAudio, { capture: true });
+document.addEventListener("keydown", unlockAudio, { capture: true });
 els.stop.addEventListener("click", () => stopSpeech());
 els.auto.addEventListener("click", toggleAuto);
 els.volume.addEventListener("input", () => { audio.volume = Number(els.volume.value); });
 document.addEventListener("keydown", onKeyDown);
 
 applyLanguage();
-setStatus(t("ready"), "idle");
+// On a touch screen the instruction is to tap, not to press a key.
+setStatus(t(window.matchMedia("(pointer: coarse)").matches ? "readyTouch" : "ready"), "idle");
 checkHealth();
 startCamera();
 setInterval(autoTick, 500);

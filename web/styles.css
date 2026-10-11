@@ -198,6 +198,18 @@ video {
   font-weight: 700;
 }
 
+.camera-frame {
+  cursor: pointer;
+}
+
+.badge.tap {
+  top: auto;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
 .badge.live { left: 10px; color: var(--ok); border-color: var(--ok); }
 .badge.mode { right: 10px; }
 
@@ -487,7 +499,7 @@ footer {
   margin: 16px auto 0;
 }
 
-/* One column on narrow screens: camera, then controls, then the result. */
+/* One column on narrow screens: camera, then the result, then the controls. */
 @media (max-width: 900px) {
   main {
     grid-template-columns: 1fr;
@@ -498,8 +510,29 @@ footer {
   }
 
   .camera { order: 1; }
-  .controls { order: 2; }
-  .result { order: 3; }
+  .result { order: 2; }
+  .controls { order: 3; }
+
+  /* Phones: tighter chrome, so the picture and the Describe button fill the screen. */
+  body {
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  .tagline {
+    display: none;
+  }
+
+  section {
+    padding: 12px;
+  }
+
+  video {
+    max-height: 44vh;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

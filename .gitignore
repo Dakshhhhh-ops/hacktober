@@ -11,3 +11,4 @@ Thumbs.db
 # Runtime output
 logs/
 voices/
+certs/
