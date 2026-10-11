@@ -35,6 +35,8 @@ python contributor-ready/scripts/audit.py . --json
 - It explains how you checked it works.
 - It does not reformat unrelated code.
 - `audit.py` stays standard library only, so the skill runs anywhere Python does.
+- A change to a check is made in both `contributor-ready/scripts/audit.py` and
+  `docs/audit.js`, so the skill and the web page give the same score.
 
 ## Ideas to work on
 

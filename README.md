@@ -1,7 +1,10 @@
 # contributor-ready
 
 An agent skill that audits a repository for how ready it is to receive outside
-contributions, scores it out of 100, and drafts the files that are missing.
+contributions, scores it out of 100, and drafts the files that are missing. It comes
+with a web page that scores any public GitHub repository in the browser.
+
+![The web checker scoring a repository](docs/screenshot.png)
 
 Built for the **Best Open-Source AI Project** track at Hacktoberfest Hack Day
 Hamirpur x ISTE NITH (11 October 2026).
@@ -55,6 +58,19 @@ cp -r hacktober/contributor-ready ~/.claude/skills/
 
 ## Usage
 
+### In the browser
+
+Open `docs/index.html` in a browser, or use the hosted copy at
+https://dakshhhhh-ops.github.io/hacktober/. Type a repository as `owner/name` or paste
+its GitHub URL and press Audit. Add `?repo=owner/name` to the address to link straight
+to a result.
+
+The page runs the same ten checks as the skill, using GitHub's public API. Nothing is
+installed and no login is needed. GitHub allows about 30 audits an hour per network
+without a login.
+
+### With an agent
+
 With an agent, open any repository and ask:
 
 > Make this repo ready for Hacktoberfest contributors.
@@ -89,13 +105,17 @@ contributor-ready/
   assets/CONTRIBUTING.md        template
   assets/PULL_REQUEST_TEMPLATE.md
   assets/bug_report.md
+docs/
+  index.html                    the web checker
+  audit.js                      the same checks, ported to the browser
 ```
 
 ## Team and tools
 
 - Daksh ([@Dakshhhhh-ops](https://github.com/Dakshhhhh-ops)): idea, direction, testing
   and submission.
-- Tools: Python 3 standard library, the Agent Skills specification, and Claude Code as
+- Tools: Python 3 standard library, plain HTML, CSS and JavaScript, the GitHub REST API,
+  Google Fonts, the Agent Skills specification, and Claude Code as
   the AI coding assistant that wrote the code during the event.
 
 ## License
