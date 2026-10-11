@@ -2,7 +2,7 @@
 name: describe-scene
 description: Describes a photo for a blind or low-vision person using a local, offline, open-weight vision-language model (via Ollama). Returns strict JSON listing physical hazards first (what, direction, rough distance), then objects, visible text and a one-line summary. Use when the user asks what is in an image, whether a path or room has obstacles, to read text on a label, sign or medicine strip, or to find an object in a photo, and the image must not leave the machine.
 license: MIT
-compatibility: Requires Python 3.11+, Ollama running locally with a vision model pulled (default qwen3-vl:2b), and the DrishtiAI repository this skill ships in. No network access is needed at run time.
+compatibility: Requires Python 3.11+, Ollama running locally with a vision model pulled (default qwen3-vl:2b-instruct), and the DrishtiAI repository this skill ships in. No network access is needed at run time.
 metadata:
   author: Dakshhhhh-ops
   version: "1.0"
@@ -36,7 +36,7 @@ The model is chosen with the `OLLAMA_MODEL` environment variable or the reposito
 ```json
 {
   "status": "ok",
-  "model": "qwen3-vl:2b",
+  "model": "qwen3-vl:2b-instruct",
   "mode": "surroundings",
   "scene": {
     "hazards": [{"what": "stairs", "where": "ahead", "distance": "near"}],
@@ -66,7 +66,7 @@ The model is chosen with the `OLLAMA_MODEL` environment variable or the reposito
 Check `status` before saying anything about the image.
 
 - `"status": "error"` (exit code 1): the image was **not** inspected. Tell the user so and
-  pass on `error.fix`, for example "Start Ollama" or "Run: ollama pull qwen3-vl:2b". Do
+  pass on `error.fix`, for example "Start Ollama" or "Run: ollama pull qwen3-vl:2b-instruct". Do
   not describe the image from its file name or from guesswork.
 - `"status": "fallback"`: the model's JSON was invalid twice, so `scene.summary` holds a
   plain-text description and `hazards` is empty because hazards could not be checked, not

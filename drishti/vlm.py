@@ -62,7 +62,7 @@ def _post_ollama(payload: dict) -> str:
     )
     try:
         with urllib.request.urlopen(request, timeout=config.VLM_TIMEOUT_S) as response:
-            return json.loads(response.read())["message"]["content"]
+            message = json.loads(response.read())["message"]
     except urllib.error.HTTPError as err:
         detail = err.read().decode("utf-8", "replace")[:200]
         if err.code == 404:
@@ -73,6 +73,13 @@ def _post_ollama(payload: dict) -> str:
     except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
         raise VLMError(f"Could not reach Ollama at {config.OLLAMA_URL}.",
                        fix="Start Ollama (open the Ollama app, or run: ollama serve).") from err
+    content = message.get("content") or ""
+    if not content.strip() and message.get("thinking"):
+        # A "thinking" variant can spend its whole token budget reasoning and never answer.
+        raise VLMError(
+            f"The model '{payload['model']}' spent its whole reply thinking and gave no answer.",
+            fix="Use a non-thinking model, for example: ollama pull qwen3-vl:2b-instruct")
+    return content
 
 
 def parse_scene(text: str, mode: str = "surroundings") -> Scene:

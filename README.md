@@ -119,21 +119,22 @@ Optional: copy `.env.example` to `.env` to change the model, port or thresholds.
 ## 9. Download the model
 
 ```
-ollama pull qwen3-vl:2b
+ollama pull qwen3-vl:2b-instruct
 ```
 
 ## 10. Model and its licence
 
 | | |
 | --- | --- |
-| Default model | `qwen3-vl:2b` on Ollama, which is Qwen3-VL-2B-Instruct |
+| Default model | `qwen3-vl:2b-instruct` on Ollama, which is Qwen3-VL-2B-Instruct |
+| Do not use | the plain `qwen3-vl:2b` tag. It is the *thinking* variant; with this project's prompts it used its whole reply reasoning and returned no answer. The app reports this and tells you which model to pull. |
 | Download size | 1.9 GB |
 | Weights licence | Apache-2.0, as stated on the [model card](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) |
 | Why this one | It was the smallest image-capable model that fit the download time available on the day |
 
 Any Ollama model that accepts images can be used by setting `OLLAMA_MODEL`, for example
 `gemma3:4b` (3.4 GB, [Gemma Terms of Use](https://ai.google.dev/gemma/terms)). Only
-`qwen3-vl:2b` has been tested.
+`qwen3-vl:2b-instruct` has been tested.
 
 ## 11. Install the voices
 
@@ -267,7 +268,7 @@ not offer to translate it through a cloud service.
 ## Licences
 
 - **This project's code**: MIT. See [LICENSE](LICENSE).
-- **Model weights** (`qwen3-vl:2b`): Apache-2.0. Not included in this repository.
+- **Model weights** (`qwen3-vl:2b-instruct`): Apache-2.0. Not included in this repository.
 - **Ollama**: MIT.
 - **Piper** (`piper-tts`): GPL-3.0-or-later. It is a separate program that this project
   calls as an optional dependency; it is not included in this repository. If you

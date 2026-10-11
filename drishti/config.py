@@ -29,7 +29,7 @@ def _env(name, default, cast=str):
 
 # Vision-language model, served by Ollama on this machine.
 OLLAMA_URL = _env("OLLAMA_URL", "http://127.0.0.1:11434")
-MODEL = _env("OLLAMA_MODEL", "qwen3-vl:2b")
+MODEL = _env("OLLAMA_MODEL", "qwen3-vl:2b-instruct")
 VLM_TIMEOUT_S = _env("DRISHTI_VLM_TIMEOUT_S", 120, float)
 MAX_TOKENS = _env("DRISHTI_MAX_TOKENS", 400, int)
 
