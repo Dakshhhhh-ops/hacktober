@@ -236,8 +236,13 @@ speaker. Nothing goes to the internet.
 3. The browser warns that the certificate is not trusted. That is expected: phone browsers
    only allow the camera over HTTPS, so the command makes its own certificate on your
    computer. Choose Advanced (or Show Details), then proceed to the site.
-4. Allow the camera, then tap the picture to describe. On phones that support it, the
-   phone vibrates when there is a warning.
+4. Allow the camera and the microphone. Then touch the screen once, anywhere: that turns
+   voice commands on, and from there the app is used by speaking ("describe", "read",
+   "find my bottle"). Nobody has to find a button. Tapping the picture also describes, and
+   on phones that support it the phone vibrates when there is a warning.
+
+The first-time setup (opening the address and accepting the certificate and permissions)
+needs a sighted helper or a screen reader. After that the phone remembers the permissions.
 
 Phone mode listens on the whole local network with no login, so anyone on that network
 can open the page while it is running. Prefer a private hotspot to public Wi-Fi and stop
@@ -374,6 +379,11 @@ inspected.
   1 to 3 s to synthesise the speech on the CPU. The warning is synthesised first so it
   starts as early as possible, but this is far too slow for anything moving quickly.
   The first request after starting is slower because the model has to load.
+- **It needs a computer nearby.** The model runs on a laptop with a GPU; in phone mode the
+  phone is only the camera, microphone and speaker, and must be on the same local network.
+  Nobody carries a laptop to cross a room, so this is a prototype of the experience, not a
+  product. The 2B model was chosen because at 1.9 GB it could plausibly run on a phone
+  itself; that has not been built or measured.
 - **Auto-monitor is not continuous detection.** It skips frames that look similar, and a
   small change in the picture can still be a new hazard.
 - **Small or curved text** is often misread. Medicine names and doses must be checked by

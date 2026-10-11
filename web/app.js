@@ -16,7 +16,7 @@ const TEXT = {
     autoNote: "Auto-monitor is experimental. It only looks again when the picture changes, so it can miss things. It is not continuous hazard detection.",
     fallbackNote: "Rough description. The model's structured answer was invalid, so no hazards could be checked.",
     disclaimer: "DrishtiAI is an experimental aid. It can be wrong or miss hazards. It does not replace a cane, a guide dog or a human guide.",
-    ready: "Ready. Press Space to describe.", readyTouch: "Ready. Tap the picture to describe.",
+    ready: "Ready. Press Space to describe.", readyTouch: "Ready. Touch the screen once, then say: describe.",
     looking: "Looking…", speaking: "Speaking…",
     spoken: "Done.", stopped: "Speech stopped.", queued: "One moment, finishing the current look.",
     nothingNew: "Nothing new to say.", modeNow: "Mode:", autoOn: "Auto-monitor on.", autoOff: "Auto-monitor off.",
@@ -52,7 +52,7 @@ const TEXT = {
     autoNote: "ऑटो-निगरानी प्रयोगात्मक है। यह तभी दोबारा देखती है जब तस्वीर बदलती है, इसलिए चीज़ें छूट सकती हैं। यह लगातार ख़तरा पहचानने की सुविधा नहीं है।",
     fallbackNote: "मोटा विवरण। मॉडल का उत्तर सही ढाँचे में नहीं था, इसलिए ख़तरों की जाँच नहीं हो सकी।",
     disclaimer: "DrishtiAI एक प्रयोगात्मक सहायक है। यह ग़लत हो सकता है या ख़तरे छोड़ सकता है। यह छड़ी, गाइड डॉग या इंसानी मदद की जगह नहीं ले सकता।",
-    ready: "तैयार। बताने के लिए Space दबाएँ।", readyTouch: "तैयार। बताने के लिए तस्वीर पर टैप करें।",
+    ready: "तैयार। बताने के लिए Space दबाएँ।", readyTouch: "तैयार। स्क्रीन को एक बार छुएँ, फिर बोलें: बताओ।",
     looking: "देख रहा हूँ…", speaking: "बोल रहा हूँ…",
     spoken: "हो गया।", stopped: "आवाज़ रोक दी।", queued: "एक पल, अभी देख रहा हूँ।",
     nothingNew: "कुछ नया नहीं है।", modeNow: "मोड:", autoOn: "ऑटो-निगरानी चालू।", autoOff: "ऑटो-निगरानी बंद।",
@@ -618,9 +618,24 @@ async function checkHealth() {
 
 for (const button of els.modeButtons) button.addEventListener("click", () => setMode(button.dataset.mode));
 for (const button of els.langButtons) button.addEventListener("click", () => setLanguage(button.dataset.lang));
-els.describe.addEventListener("click", () => describe());
+// On a phone, the first touch anywhere on the screen turns voice commands on, so a person
+// who cannot see the screen never has to find a button. That touch does nothing else.
+const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+let firstTouchDone = false;
+let ignoreClicksUntil = 0;
+const clickAllowed = () => performance.now() >= ignoreClicksUntil;
+
+document.addEventListener("pointerdown", () => {
+  if (!isTouchDevice || firstTouchDone) return;
+  firstTouchDone = true;
+  if (state.stopListening) return;
+  ignoreClicksUntil = performance.now() + 700;
+  toggleVoice();
+}, { capture: true });
+
+els.describe.addEventListener("click", () => { if (clickAllowed()) describe(); });
 // The whole camera picture is a Describe button: a large target that needs no aiming.
-els.cameraFrame.addEventListener("click", () => describe());
+els.cameraFrame.addEventListener("click", () => { if (clickAllowed()) describe(); });
 els.cameraFrame.addEventListener("keydown", (event) => {
   if (event.key === "Enter") describe();
 });
@@ -628,7 +643,7 @@ document.addEventListener("pointerdown", unlockAudio, { capture: true });
 document.addEventListener("keydown", unlockAudio, { capture: true });
 els.stop.addEventListener("click", () => stopSpeech());
 els.auto.addEventListener("click", toggleAuto);
-els.voice.addEventListener("click", toggleVoice);
+els.voice.addEventListener("click", () => { if (clickAllowed()) toggleVoice(); });
 els.volume.addEventListener("input", () => { audio.volume = Number(els.volume.value); });
 document.addEventListener("keydown", onKeyDown);
 

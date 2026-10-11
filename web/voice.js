@@ -73,11 +73,20 @@ export class UtteranceDetector {
 // Start listening. onUtterance(pcm: Int16Array) is called for each thing the person says.
 // Returns a function that stops listening and releases the microphone.
 export async function startListening(onUtterance, onStart = () => {}) {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
-  });
+  // Create and resume the audio context before anything is awaited: on iPhones it only
+  // starts running if that happens directly inside the touch that asked for it.
   const context = new (window.AudioContext || window.webkitAudioContext)();
-  await context.resume();
+  const resumed = context.resume();
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
+    });
+  } catch (err) {
+    context.close();
+    throw err;
+  }
+  await resumed;
   const source = context.createMediaStreamSource(stream);
   const processor = context.createScriptProcessor(4096, 1, 1);
   const silent = context.createGain();
