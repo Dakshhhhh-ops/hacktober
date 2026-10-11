@@ -1,9 +1,10 @@
 """A stand-in for Ollama, for working on the web page without the real model.
 
     python tests/fake_ollama.py           # listens on 127.0.0.1:11435
-    OLLAMA_URL=http://127.0.0.1:11435 python -m drishti
+    OLLAMA_URL=http://127.0.0.1:11435 OLLAMA_MODEL=STAND-IN-not-a-real-model python -m drishti
 
-It returns the same canned scene for every image. It is NEVER used by the evaluation
+It returns the same canned scene for every image and does not look at the picture, so
+every answer is labelled as test data. It is NEVER used by the evaluation
 script or for any reported result.
 """
 import json
@@ -12,12 +13,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 SCENE = {
     "hazards": [
-        {"what": "stairs going down", "where": "ahead", "distance": "near"},
-        {"what": "open door", "where": "left", "distance": "mid"},
+        {"what": "TEST DATA, not real: stairs", "where": "ahead", "distance": "near"},
+        {"what": "TEST DATA, not real: open door", "where": "left", "distance": "mid"},
     ],
     "objects": [{"what": "chair", "where": "left"}],
-    "text": ["EXIT", "Platform 2"],
-    "summary": "A corridor with stairs ahead and a chair on the left.",
+    "text": ["TEST DATA, not real: EXIT"],
+    "summary": "This is canned test data. No vision model looked at the camera.",
 }
 
 
@@ -31,7 +32,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):  # /api/tags: pretend every model is installed
-        self._send({"models": [{"name": n} for n in ("qwen3-vl:2b", "gemma3:4b")]})
+        self._send({"models": [{"name": "STAND-IN-not-a-real-model:latest"}]})
 
     def do_POST(self):
         request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
