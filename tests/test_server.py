@@ -92,6 +92,31 @@ class DescribeEndpointTests(unittest.TestCase):
         self.assertEqual(manual.speech.hazards, ["Careful: stairs ahead, near."])
 
 
+class DisplayTests(unittest.TestCase):
+    def setUp(self):
+        server.repeats = server.RepeatFilter(20)
+
+    def test_hazard_cards_carry_the_parts_the_page_draws(self):
+        with mock.patch.object(vlm, "describe", return_value=result()):
+            response = server.describe(server.DescribeRequest(image=JPEG, lang="hi"))
+        card = response.hazards[0]
+        self.assertEqual((card.what, card.where, card.distance), ("सीढ़ियाँ", "ahead", "near"))
+        self.assertEqual(card.sentence, response.speech.hazards[0])
+
+    def test_a_suppressed_warning_has_no_card(self):
+        with mock.patch.object(vlm, "describe", return_value=result()):
+            server.describe(server.DescribeRequest(image=JPEG, auto=True))
+            again = server.describe(server.DescribeRequest(image=JPEG, auto=True))
+        self.assertEqual(again.hazards, [])
+
+    def test_render_rewords_a_scene_in_another_language_without_the_model(self):
+        with mock.patch.object(vlm, "describe") as described:
+            response = server.render(server.RenderRequest(scene=SCENE, lang="hi"))
+        described.assert_not_called()
+        self.assertEqual(response.speech.hazards, ["सावधान: सामने सीढ़ियाँ, पास।"])
+        self.assertEqual(response.lang, "hi")
+
+
 class SpeakEndpointTests(unittest.TestCase):
     def test_audio_is_returned_as_wav(self):
         with mock.patch.object(server.tts, "synthesize", return_value=b"RIFFdata"):

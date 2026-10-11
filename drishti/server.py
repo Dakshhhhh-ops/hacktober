@@ -13,8 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import config, tts, vlm
-from .schema import DescribeResponse, ErrorInfo, Lang, Mode, Speech
-from .speech import RepeatFilter, build_speech
+from .schema import DescribeResponse, ErrorInfo, FindResult, Lang, Mode, Scene, Speech
+from .speech import RepeatFilter, build_speech, hazard_cards, object_names
 
 # Windows sometimes maps .js to text/plain, which browsers refuse for module scripts.
 mimetypes.add_type("text/javascript", ".js")
@@ -31,6 +31,16 @@ class DescribeRequest(BaseModel):
     lang: Lang = "en"
     target: str = Field(default="", max_length=config.MAX_TARGET_CHARS)
     auto: bool = False  # true when the page sent the frame by itself, not on a key press
+
+
+class RenderRequest(BaseModel):
+    """A scene the model already produced, to be worded again in another language."""
+    scene: Scene
+    mode: Mode = "surroundings"
+    lang: Lang = "en"
+    target: str = Field(default="", max_length=config.MAX_TARGET_CHARS)
+    find_result: FindResult | None = None
+    fallback: bool = False
 
 
 class SpeakRequest(BaseModel):
@@ -102,9 +112,26 @@ def describe(request: DescribeRequest):
     return DescribeResponse(
         request_id=result.request_id, status=result.status, mode=request.mode, lang=request.lang,
         model=result.model, scene=result.scene, find_result=result.find_result,
-        speech=Speech(hazards=hazards, rest=rest), retries=result.retries,
-        inference_ms=result.inference_ms,
+        speech=Speech(hazards=hazards, rest=rest),
+        hazards=[c for c in hazard_cards(result.scene, request.lang) if c["sentence"] in hazards],
+        objects=object_names(result.scene, request.lang), target=request.target.strip(),
+        retries=result.retries, inference_ms=result.inference_ms,
         total_ms=round((time.perf_counter() - started) * 1000),
+    )
+
+
+@app.post("/api/render", response_model=DescribeResponse)
+def render(request: RenderRequest):
+    """Word an existing scene again, for example after switching language. No model call."""
+    hazards, rest = build_speech(request.scene, request.mode, request.lang, request.target,
+                                 request.find_result, fallback=request.fallback)
+    repeats.remember(hazards + rest)
+    return DescribeResponse(
+        request_id="", status="fallback" if request.fallback else "ok", mode=request.mode,
+        lang=request.lang, model=config.MODEL, scene=request.scene,
+        find_result=request.find_result, speech=Speech(hazards=hazards, rest=rest),
+        hazards=hazard_cards(request.scene, request.lang),
+        objects=object_names(request.scene, request.lang), target=request.target.strip(),
     )
 
 

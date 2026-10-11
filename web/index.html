@@ -11,27 +11,80 @@
 </head>
 <body>
   <header>
-    <h1>DrishtiAI</h1>
-    <p id="model-state" class="pill" data-state="checking">Checking the local model…</p>
+    <div class="brand">
+      <h1>DrishtiAI</h1>
+      <p class="tagline" data-i18n="tagline">An offline assistant that describes what is in front of you</p>
+    </div>
+    <div class="header-tools">
+      <div class="segmented" role="group" aria-label="Language / भाषा">
+        <button type="button" data-lang="en" lang="en" aria-pressed="true">English</button>
+        <button type="button" data-lang="hi" lang="hi" aria-pressed="false">हिन्दी</button>
+      </div>
+      <p id="model-state" class="pill" data-state="checking">Checking the local model…</p>
+    </div>
   </header>
 
   <main>
-    <section class="camera" aria-label="Camera">
-      <video id="video" autoplay playsinline muted aria-label="Live camera preview"></video>
-      <p id="camera-note" class="note" hidden></p>
-    </section>
+    <div class="left">
+      <section class="camera" aria-label="Camera">
+        <div class="camera-frame">
+          <video id="video" autoplay playsinline muted aria-label="Live camera preview"></video>
+          <span class="badge live" aria-hidden="true">● <span data-i18n="live">Live</span></span>
+          <span id="mode-badge" class="badge mode" aria-hidden="true">Surroundings</span>
+        </div>
+        <p id="camera-note" class="note" hidden></p>
+      </section>
+
+      <section class="result" aria-label="Latest description">
+        <p id="status" class="status" role="status" aria-live="polite" data-state="idle">Ready. Press Space to describe.</p>
+
+        <div id="hazards" class="hazards" hidden>
+          <h2><span aria-hidden="true">⚠</span> <span data-i18n="warning">Warning</span></h2>
+          <ul id="hazard-list"></ul>
+        </div>
+
+        <p id="fallback-note" class="note boxed" hidden data-i18n="fallbackNote">Rough description. The model's structured answer was invalid, so no hazards could be checked.</p>
+
+        <h2 id="spoken-label" class="label" hidden></h2>
+        <p id="spoken" class="spoken"></p>
+
+        <div id="objects-row" class="objects" hidden>
+          <h2 class="label" data-i18n="seen">Also seen</h2>
+          <ul id="objects" class="chips"></ul>
+        </div>
+
+        <p id="meta" class="meta"></p>
+
+        <details>
+          <summary data-i18n="raw">Model output (JSON)</summary>
+          <pre id="raw"></pre>
+        </details>
+      </section>
+    </div>
 
     <section class="controls" aria-label="Controls">
       <div class="modes" role="group" aria-labelledby="mode-label">
-        <h2 id="mode-label" data-i18n="mode">Mode</h2>
+        <h2 id="mode-label" class="label" data-i18n="mode">Mode</h2>
         <button type="button" aria-pressed="true" data-mode="surroundings">
-          <kbd>1</kbd> <span data-i18n="surroundings">Surroundings</span>
+          <kbd>1</kbd>
+          <span class="mode-text">
+            <strong data-i18n="surroundings">Surroundings</strong>
+            <span data-i18n="surroundingsHint">Hazards first, then one line about the scene</span>
+          </span>
         </button>
         <button type="button" aria-pressed="false" data-mode="read">
-          <kbd>2</kbd> <span data-i18n="read">Read</span>
+          <kbd>2</kbd>
+          <span class="mode-text">
+            <strong data-i18n="read">Read</strong>
+            <span data-i18n="readHint">Reads signs, labels and packaging</span>
+          </span>
         </button>
         <button type="button" aria-pressed="false" data-mode="find">
-          <kbd>3</kbd> <span data-i18n="find">Find</span>
+          <kbd>3</kbd>
+          <span class="mode-text">
+            <strong data-i18n="find">Find</strong>
+            <span data-i18n="findHint">Looks for one object you name</span>
+          </span>
         </button>
       </div>
 
@@ -46,40 +99,19 @@
 
       <div class="row">
         <button id="stop" type="button"><span data-i18n="stop">Stop speech</span> <kbd>Esc</kbd></button>
-        <button id="language" type="button" aria-label="Language: English. Press to switch to Hindi.">
-          <kbd>L</kbd> <span id="language-name">English</span>
-        </button>
-      </div>
-
-      <div class="row">
         <button id="auto" type="button" aria-pressed="false">
-          <kbd>A</kbd> <span data-i18n="auto">Auto-monitor (experimental)</span>
+          <kbd>A</kbd> <span data-i18n="auto">Auto-monitor</span>
         </button>
-        <label class="volume" for="volume">
-          <span data-i18n="volume">Volume</span>
-          <input id="volume" type="range" min="0" max="1" step="0.1" value="1">
-        </label>
       </div>
+
+      <label class="volume" for="volume">
+        <span data-i18n="volume">Volume</span>
+        <input id="volume" type="range" min="0" max="1" step="0.1" value="1">
+      </label>
+
       <p id="voice-state" class="note"></p>
-      <p class="note" data-i18n="autoNote">Auto-monitor only looks again when the picture changes. It can miss things. It is not continuous hazard detection.</p>
-    </section>
-
-    <section class="result" aria-label="Latest description">
-      <p id="status" class="status" role="status" aria-live="polite" data-state="idle">Ready. Press Space to describe.</p>
-
-      <div id="hazards" class="hazards" hidden>
-        <h2><span aria-hidden="true">⚠</span> <span data-i18n="warning">Warning</span></h2>
-        <ul id="hazard-list"></ul>
-      </div>
-
-      <p id="fallback-note" class="note" hidden data-i18n="fallbackNote">Rough description. The model's structured answer was invalid, so no hazards could be checked.</p>
-      <p id="spoken" class="spoken"></p>
-      <p id="meta" class="meta"></p>
-
-      <details>
-        <summary data-i18n="raw">Model output (JSON)</summary>
-        <pre id="raw"></pre>
-      </details>
+      <p class="note" data-i18n="autoNote">Auto-monitor is experimental. It only looks again when the picture changes, so it can miss things. It is not continuous hazard detection.</p>
+      <p class="note"><kbd>L</kbd> <span data-i18n="languageHint">switches language</span></p>
     </section>
   </main>
 

@@ -46,13 +46,27 @@ fully local reference pipeline to build on.
 - Optional auto-monitoring (experimental) that only calls the model when the picture has
   changed, and does not repeat the same warning within 20 seconds.
 - High-contrast page with large controls, visible focus, and states shown by text and
-  symbols as well as colour.
+  symbols as well as colour. Each warning is a card with a direction arrow.
+- An English / हिन्दी switch. Changing language re-words the answer on screen and speaks
+  it again without calling the model.
 - A latency log (CSV) with one row per model call.
 - An evaluation script that reports missed hazards separately.
 - An [Agent Skill](skill/describe-scene/SKILL.md) that exposes the same pipeline to
   coding agents.
 
 ## 5. Demo
+
+Real output from `qwen3-vl:2b-instruct` running locally. To make these screenshots
+repeatable, an evaluation photo was fed in as the webcam; nothing in them is mocked.
+
+| Surroundings, English | Same answer after pressing **L** (Hindi) |
+| --- | --- |
+| ![Hazard cards for an open manhole and a traffic cone](docs/screenshot-en.jpg) | ![The same warnings in Hindi](docs/screenshot-hi.jpg) |
+
+![Read mode reading a wet floor sign](docs/screenshot-read.jpg)
+
+Photos in the screenshots: "Open Manhole - New Orleans September 2020" by Bart Everson
+(CC BY 2.0) and "Wet floor caution sugn" by Kurt Kaiser (CC0), from Wikimedia Commons.
 
 <!-- DEMO-GIF: record a short screen capture and save it as docs/demo.gif -->
 *Demo recording: to be added.*
@@ -162,7 +176,7 @@ only. The first description after starting is slower because the model is being 
 | --- | --- |
 | Space | Describe what the camera sees now |
 | 1 / 2 / 3 | Surroundings / Read / Find |
-| L | Switch between English and Hindi |
+| L | Switch between English and Hindi (also the buttons at the top right) |
 | A | Auto-monitor on or off (experimental) |
 | Esc | Stop speech |
 | Enter (in the Find box) | Search for what you typed |

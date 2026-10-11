@@ -1,13 +1,18 @@
-// DrishtiAI page logic: camera capture, describe requests, speech playback, shortcuts.
+// DrishtiAI page logic: camera capture, describe requests, display, speech, shortcuts.
 import { THUMB_SIZE, toGray, frameDifference, shouldDescribe } from "./gate.js";
 
 const TEXT = {
   en: {
+    tagline: "An offline assistant that describes what is in front of you",
     mode: "Mode", surroundings: "Surroundings", read: "Read", find: "Find",
+    surroundingsHint: "Hazards first, then one line about the scene",
+    readHint: "Reads signs, labels and packaging",
+    findHint: "Looks for one object you name",
     findLabel: "What are you looking for?", describe: "Describe now", stop: "Stop speech",
-    auto: "Auto-monitor (experimental)", volume: "Volume", warning: "Warning",
-    raw: "Model output (JSON)",
-    autoNote: "Auto-monitor only looks again when the picture changes. It can miss things. It is not continuous hazard detection.",
+    auto: "Auto-monitor", volume: "Volume", warning: "Warning", live: "Live",
+    seen: "Also seen", textRead: "Text read", findAnswer: "Search result", scene: "Scene",
+    raw: "Model output (JSON)", languageHint: "switches language",
+    autoNote: "Auto-monitor is experimental. It only looks again when the picture changes, so it can miss things. It is not continuous hazard detection.",
     fallbackNote: "Rough description. The model's structured answer was invalid, so no hazards could be checked.",
     disclaimer: "DrishtiAI is an experimental aid. It can be wrong or miss hazards. It does not replace a cane, a guide dog or a human guide.",
     ready: "Ready. Press Space to describe.", looking: "Looking…", speaking: "Speaking…",
@@ -19,16 +24,23 @@ const TEXT = {
     serverDown: "The DrishtiAI server is not responding. Restart it with: python -m drishti",
     noVoice: "No offline voice is installed, so this was not spoken:",
     playFailed: "The audio could not be played, so this was not spoken:",
-    modelReady: "ready (local)", languageName: "English",
+    modelReady: "ready (local)", languageName: "English", languageNow: "Language: English.",
     voices: "Offline voices:", voiceMissing: "not installed (text only)",
-    languageLabel: "Language: English. Press to switch to Hindi.",
+    left: "Left", right: "Right", ahead: "Ahead", below: "Below",
+    near: "near", mid: "mid distance", far: "far",
+    modelTime: "model", roundTrip: "round trip", retries: "retries",
   },
   hi: {
+    tagline: "ऑफ़लाइन सहायक जो बताता है कि आपके सामने क्या है",
     mode: "मोड", surroundings: "आसपास", read: "पढ़ो", find: "खोजो",
+    surroundingsHint: "पहले ख़तरे, फिर आसपास के बारे में एक पंक्ति",
+    readHint: "बोर्ड, लेबल और पैकेट पढ़ता है",
+    findHint: "आपकी बताई एक चीज़ खोजता है",
     findLabel: "आप क्या खोज रहे हैं?", describe: "अभी बताओ", stop: "आवाज़ रोको",
-    auto: "ऑटो-निगरानी (प्रयोगात्मक)", volume: "आवाज़", warning: "चेतावनी",
-    raw: "मॉडल का उत्तर (JSON)",
-    autoNote: "ऑटो-निगरानी तभी दोबारा देखती है जब तस्वीर बदलती है। इससे चीज़ें छूट सकती हैं। यह लगातार ख़तरा पहचानने की सुविधा नहीं है।",
+    auto: "ऑटो-निगरानी", volume: "आवाज़", warning: "चेतावनी", live: "लाइव",
+    seen: "यह भी दिखा", textRead: "पढ़ा गया पाठ", findAnswer: "खोज का नतीजा", scene: "दृश्य",
+    raw: "मॉडल का उत्तर (JSON)", languageHint: "से भाषा बदलती है",
+    autoNote: "ऑटो-निगरानी प्रयोगात्मक है। यह तभी दोबारा देखती है जब तस्वीर बदलती है, इसलिए चीज़ें छूट सकती हैं। यह लगातार ख़तरा पहचानने की सुविधा नहीं है।",
     fallbackNote: "मोटा विवरण। मॉडल का उत्तर सही ढाँचे में नहीं था, इसलिए ख़तरों की जाँच नहीं हो सकी।",
     disclaimer: "DrishtiAI एक प्रयोगात्मक सहायक है। यह ग़लत हो सकता है या ख़तरे छोड़ सकता है। यह छड़ी, गाइड डॉग या इंसानी मदद की जगह नहीं ले सकता।",
     ready: "तैयार। बताने के लिए Space दबाएँ।", looking: "देख रहा हूँ…", speaking: "बोल रहा हूँ…",
@@ -40,20 +52,26 @@ const TEXT = {
     serverDown: "DrishtiAI सर्वर जवाब नहीं दे रहा। इसे दोबारा चलाएँ: python -m drishti",
     noVoice: "ऑफ़लाइन आवाज़ इंस्टॉल नहीं है, इसलिए यह बोला नहीं गया:",
     playFailed: "ऑडियो नहीं चल सका, इसलिए यह बोला नहीं गया:",
-    modelReady: "तैयार (लोकल)", languageName: "हिन्दी",
+    modelReady: "तैयार (लोकल)", languageName: "हिन्दी", languageNow: "भाषा: हिन्दी।",
     voices: "ऑफ़लाइन आवाज़ें:", voiceMissing: "इंस्टॉल नहीं (सिर्फ़ टेक्स्ट)",
-    languageLabel: "भाषा: हिन्दी। अंग्रेज़ी के लिए दबाएँ।",
+    left: "बाईं ओर", right: "दाईं ओर", ahead: "सामने", below: "नीचे",
+    near: "पास", mid: "थोड़ी दूर", far: "दूर",
+    modelTime: "मॉडल", roundTrip: "कुल समय", retries: "दोबारा कोशिश",
   },
 };
+const ARROWS = { left: "←", right: "→", ahead: "↑", below: "↓" };
 
 const $ = (id) => document.getElementById(id);
 const els = {
   video: $("video"), cameraNote: $("camera-note"), modelState: $("model-state"),
-  findRow: $("find-row"), target: $("target"), describe: $("describe"), stop: $("stop"),
-  language: $("language"), languageName: $("language-name"), auto: $("auto"), volume: $("volume"),
+  modeBadge: $("mode-badge"), findRow: $("find-row"), target: $("target"),
+  describe: $("describe"), stop: $("stop"), auto: $("auto"), volume: $("volume"),
   status: $("status"), hazards: $("hazards"), hazardList: $("hazard-list"),
-  fallbackNote: $("fallback-note"), voiceState: $("voice-state"), spoken: $("spoken"), meta: $("meta"), raw: $("raw"),
+  fallbackNote: $("fallback-note"), spokenLabel: $("spoken-label"), spoken: $("spoken"),
+  objectsRow: $("objects-row"), objects: $("objects"), meta: $("meta"), raw: $("raw"),
+  voiceState: $("voice-state"),
   modeButtons: [...document.querySelectorAll("[data-mode]")],
+  langButtons: [...document.querySelectorAll("[data-lang]")],
 };
 
 const state = {
@@ -70,6 +88,8 @@ const state = {
   minIntervalMs: 4000,
   speechRun: 0,         // bumped to cancel whatever is being spoken
   voices: null,         // { en: "piper" | "espeak-ng" | null, hi: ... } from the server
+  health: null,
+  last: null,           // the last answer shown, kept so it can be re-worded in another language
 };
 
 const audio = new Audio();
@@ -79,17 +99,38 @@ thumbCanvas.width = thumbCanvas.height = THUMB_SIZE;
 
 const t = (key) => TEXT[state.lang][key];
 
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
 function setStatus(text, kind = "idle") {
   els.status.textContent = text;
   els.status.dataset.state = kind;
 }
 
+async function postJson(path, body) {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return response.json();
+}
+
+// ---- Language -----------------------------------------------------------------
+
 function applyLanguage() {
   document.documentElement.lang = state.lang;
   for (const node of document.querySelectorAll("[data-i18n]")) node.textContent = t(node.dataset.i18n);
-  els.languageName.textContent = t("languageName");
-  els.language.setAttribute("aria-label", t("languageLabel"));
+  for (const button of els.langButtons) {
+    button.setAttribute("aria-pressed", String(button.dataset.lang === state.lang));
+  }
+  els.modeBadge.textContent = t(state.mode);
   showVoices();
+  showModel();
 }
 
 // Say which languages really have an offline voice installed.
@@ -97,6 +138,36 @@ function showVoices() {
   if (!state.voices) return;
   const describeVoice = (lang) => `${TEXT[lang].languageName}: ${state.voices[lang] || t("voiceMissing")}`;
   els.voiceState.textContent = `${t("voices")} ${describeVoice("en")} · ${describeVoice("hi")}`;
+}
+
+function showModel() {
+  const health = state.health;
+  if (!health) return;
+  els.modelState.textContent = health.model_ok ? `${health.model} ${t("modelReady")}` : health.model_message;
+  els.modelState.dataset.state = health.model_ok ? "ok" : "error";
+}
+
+async function setLanguage(lang) {
+  if (lang === state.lang) return;
+  state.lang = lang;
+  applyLanguage();
+  setStatus(t("languageNow"), "idle");
+  if (!state.last) return;
+  // Re-word the answer on screen in the new language. No new model call is needed.
+  stopSpeech(false);
+  const previous = state.last;
+  try {
+    const data = await postJson("/api/render", {
+      scene: previous.scene, mode: previous.mode, lang, target: previous.target,
+      find_result: previous.find_result, fallback: previous.status === "fallback",
+    });
+    if (!data.status || data.status === "error") return;
+    show({ ...data, model: previous.model, inference_ms: previous.inference_ms, retries: previous.retries },
+      previous.roundTripMs);
+    await speak(data);
+  } catch (err) {
+    // The old answer stays on screen; the next description will use the new language.
+  }
 }
 
 // ---- Camera -------------------------------------------------------------------
@@ -169,12 +240,8 @@ async function describe({ auto = false } = {}) {
   const started = performance.now();
   let data = null;
   try {
-    const response = await fetch("/api/describe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: captureFrame(), mode: state.mode, lang: state.lang, target, auto }),
-    });
-    data = await response.json();
+    data = await postJson("/api/describe",
+      { image: captureFrame(), mode: state.mode, lang: state.lang, target, auto });
   } catch (err) {
     data = null;
   }
@@ -196,8 +263,7 @@ async function describe({ auto = false } = {}) {
     setStatus([data.error.message, data.error.fix].filter(Boolean).join(" "), "error");
     return;
   }
-  const hasSpeech = data.speech.hazards.length + data.speech.rest.length > 0;
-  if (!hasSpeech) {
+  if (data.speech.hazards.length + data.speech.rest.length === 0) {
     // Automatic frame with nothing that was not already said recently.
     setStatus(t("nothingNew"), "done");
     return;
@@ -206,20 +272,45 @@ async function describe({ auto = false } = {}) {
   await speak(data);
 }
 
+// ---- Display ------------------------------------------------------------------
+
+function hazardCard(card) {
+  const item = el("li");
+  const arrow = el("span", "arrow", ARROWS[card.where]);
+  arrow.setAttribute("aria-hidden", "true");
+  const body = el("div");
+  body.append(
+    el("span", "what", card.what),
+    el("span", "where", `${t(card.where)} · ${t(card.distance)}`),
+  );
+  item.append(arrow, body);
+  return item;
+}
+
 function show(data, roundTripMs) {
-  els.hazardList.replaceChildren(...data.speech.hazards.map((sentence) => {
-    const item = document.createElement("li");
-    item.textContent = sentence;
-    return item;
-  }));
-  els.hazards.hidden = data.speech.hazards.length === 0;
+  state.last = { ...data, roundTripMs };
+
+  els.hazardList.replaceChildren(...data.hazards.map(hazardCard));
+  els.hazards.hidden = data.hazards.length === 0;
   els.fallbackNote.hidden = data.status !== "fallback";
+
+  // The main answer: the text that was read, the search result, or the scene line.
+  const kind = data.status === "fallback" ? "summary" : data.mode === "surroundings" ? "summary" : data.mode;
   els.spoken.textContent = data.speech.rest.join("\n");
-  els.spoken.lang = data.lang;
+  els.spoken.dataset.kind = kind;
+  els.spoken.dataset.find = data.find_result ? data.find_result.status : "";
+  els.spokenLabel.textContent = t({ read: "textRead", find: "findAnswer", summary: "scene" }[kind]);
+  els.spokenLabel.hidden = data.speech.rest.length === 0;
+
+  const showObjects = data.mode === "surroundings" && data.status === "ok" && data.objects.length > 0;
+  els.objects.replaceChildren(...(showObjects ? data.objects.map((name) => el("li", "", name)) : []));
+  els.objectsRow.hidden = !showObjects;
+
   const seconds = (ms) => (ms / 1000).toFixed(1) + " s";
-  els.meta.textContent =
-    `${data.model} · model ${seconds(data.inference_ms)} · round trip ${seconds(roundTripMs)}` +
-    (data.retries ? ` · retries ${data.retries}` : "");
+  els.meta.textContent = data.inference_ms
+    ? `${data.model} · ${t("modelTime")} ${seconds(data.inference_ms)} · ${t("roundTrip")} ${seconds(roundTripMs)}`
+      + (data.retries ? ` · ${t("retries")} ${data.retries}` : "")
+    : data.model;
   els.raw.textContent = JSON.stringify(
     data.find_result ? { ...data.scene, find_result: data.find_result } : data.scene, null, 2);
 }
@@ -260,6 +351,7 @@ function play(blob) {
 async function speak(data) {
   // Hazards are synthesised as their own clip so the warning starts as early as possible.
   const parts = [data.speech.hazards.join(" "), data.speech.rest.join(" ")].filter(Boolean);
+  if (parts.length === 0) return;
   const run = ++state.speechRun;
   const clips = parts.map((text) => fetchAudio(text, data.lang));
   state.speaking = true;
@@ -295,15 +387,10 @@ function setMode(mode) {
   for (const button of els.modeButtons) {
     button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
   }
+  els.modeBadge.textContent = t(mode);
   els.findRow.hidden = mode !== "find";
   setStatus(`${t("modeNow")} ${t(mode)}`, "idle");
   if (mode === "find") els.target.focus();
-}
-
-function toggleLanguage() {
-  state.lang = state.lang === "en" ? "hi" : "en";
-  applyLanguage();
-  setStatus(t("languageName"), "idle");
 }
 
 function toggleAuto() {
@@ -347,7 +434,7 @@ function onKeyDown(event) {
     "1": () => setMode("surroundings"),
     "2": () => setMode("read"),
     "3": () => setMode("find"),
-    l: toggleLanguage,
+    l: () => setLanguage(state.lang === "en" ? "hi" : "en"),
     a: toggleAuto,
     escape: () => stopSpeech(),
   };
@@ -361,18 +448,13 @@ function onKeyDown(event) {
 async function checkHealth() {
   try {
     const health = await (await fetch("/api/health")).json();
+    state.health = health;
     state.threshold = health.change_threshold;
     state.minIntervalMs = health.min_interval_s * 1000;
     state.voices = health.tts;
     showVoices();
-    if (health.model_ok) {
-      els.modelState.textContent = `${health.model} ${t("modelReady")}`;
-      els.modelState.dataset.state = "ok";
-    } else {
-      els.modelState.textContent = health.model_message;
-      els.modelState.dataset.state = "error";
-      setStatus(`${health.model_message} ${health.model_fix}`, "error");
-    }
+    showModel();
+    if (!health.model_ok) setStatus(`${health.model_message} ${health.model_fix}`, "error");
   } catch (err) {
     els.modelState.textContent = t("serverDown");
     els.modelState.dataset.state = "error";
@@ -380,9 +462,9 @@ async function checkHealth() {
 }
 
 for (const button of els.modeButtons) button.addEventListener("click", () => setMode(button.dataset.mode));
+for (const button of els.langButtons) button.addEventListener("click", () => setLanguage(button.dataset.lang));
 els.describe.addEventListener("click", () => describe());
 els.stop.addEventListener("click", () => stopSpeech());
-els.language.addEventListener("click", toggleLanguage);
 els.auto.addEventListener("click", toggleAuto);
 els.volume.addEventListener("input", () => { audio.volume = Number(els.volume.value); });
 document.addEventListener("keydown", onKeyDown);

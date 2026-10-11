@@ -55,6 +55,26 @@ def hazard_sentence(hazard: Hazard, lang: str) -> str:
     )
 
 
+def hazard_cards(scene: Scene, lang: str = "en") -> list[dict]:
+    """The warnings to give, nearest first, each one only once."""
+    cards = {}
+    for h in sorted(scene.hazards, key=lambda h: _NEAREST_FIRST[h.distance]):
+        what = h.what.strip().rstrip(".")
+        sentence = hazard_sentence(h, lang)
+        # A dict keyed by sentence drops repeats (the model sometimes lists one hazard twice).
+        cards.setdefault(sentence, {
+            "sentence": sentence, "what": hindi.translate(what) if lang == "hi" else what,
+            "where": h.where, "distance": h.distance,
+        })
+    return list(cards.values())
+
+
+def object_names(scene: Scene, lang: str = "en", limit: int = 6) -> list[str]:
+    """Names of the things seen, for display. Hindi uses the glossary where it can."""
+    names = [hindi.translate(o.what) if lang == "hi" else o.what.strip() for o in scene.objects]
+    return list(dict.fromkeys(n for n in names if n))[:limit]
+
+
 def _short(summary: str) -> str:
     words = summary.split()
     return summary.strip() if len(words) <= MAX_SUMMARY_WORDS else " ".join(words[:MAX_SUMMARY_WORDS]) + "."
@@ -69,11 +89,7 @@ def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
     (plain text, no validated JSON) is spoken with a prefix that marks it as rough.
     """
     phrases = PHRASES[lang]
-    # dict.fromkeys drops repeats (the model sometimes lists one hazard twice) and keeps order.
-    hazards = list(dict.fromkeys(
-        hazard_sentence(h, lang)
-        for h in sorted(scene.hazards, key=lambda h: _NEAREST_FIRST[h.distance])
-    ))
+    hazards = [card["sentence"] for card in hazard_cards(scene, lang)]
     summary = _short(scene.summary)
     if lang == "hi" and not fallback:
         summary = _hindi_summary(scene) or summary

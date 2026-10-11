@@ -63,6 +63,14 @@ class Speech(BaseModel):
     rest: list[str] = []
 
 
+class HazardCard(BaseModel):
+    """One warning, in the output language, for the page to draw."""
+    sentence: str        # what is spoken, e.g. "Careful: stairs ahead, near."
+    what: str            # "stairs" / "सीढ़ियाँ"
+    where: Where
+    distance: Distance
+
+
 class DescribeResponse(BaseModel):
     request_id: str
     # "ok": validated JSON. "fallback": plain-text summary only. "error": nothing usable.
@@ -73,6 +81,9 @@ class DescribeResponse(BaseModel):
     scene: Scene | None = None
     find_result: FindResult | None = None
     speech: Speech = Speech()
+    hazards: list[HazardCard] = []   # the warnings in speech.hazards, with their parts
+    objects: list[str] = []          # names of things seen, in the output language
+    target: str = ""
     retries: int = 0
     inference_ms: int = 0  # time spent inside the vision model, all attempts
     total_ms: int = 0      # whole request on the server; excludes speech synthesis and playback
