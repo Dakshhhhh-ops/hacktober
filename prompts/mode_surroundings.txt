@@ -1,0 +1,1 @@
+Mode: surroundings. The person wants to know what is around them before moving. List every hazard, list the main objects, and give a one-line summary of the scene.

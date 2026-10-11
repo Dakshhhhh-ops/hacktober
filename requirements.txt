@@ -1,0 +1,6 @@
+fastapi>=0.115
+uvicorn>=0.30
+pydantic>=2.7
+# Offline text-to-speech. If this fails to install, the app still runs and the
+# browser's built-in voice is used instead.
+piper-tts>=1.2

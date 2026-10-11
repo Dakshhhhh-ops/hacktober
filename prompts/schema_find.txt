@@ -1,0 +1,9 @@
+Schema:
+{
+  "hazards": [{"what": string, "where": "left" | "right" | "ahead" | "below", "distance": "near" | "mid" | "far"}],
+  "objects": [{"what": string, "where": string}],
+  "text": [string],
+  "summary": string,
+  "find_result": {"status": "found" | "not_found" | "uncertain", "where": string}
+}
+All five keys are required. Use an empty list when there is nothing to report.

@@ -1,0 +1,2 @@
+Mode: find. The person is looking for: {target}
+Set "find_result.status" to "found" only if you can clearly see it, and put its rough position in "find_result.where" (for example "on the table, to the left"). Set it to "not_found" if it is not in the image. Set it to "uncertain" if something might be it but you cannot tell. Leave "find_result.where" empty unless the status is "found". Do not guess. Still list hazards.

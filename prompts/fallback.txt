@@ -1,0 +1,1 @@
+Describe this scene for a blind person in one short plain sentence, with no JSON and no formatting. Mention any physical hazard first. Only say what you can actually see.

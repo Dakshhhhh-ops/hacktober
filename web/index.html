@@ -3,14 +3,85 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>contributor-ready</title>
-  <meta name="description" content="Check how ready any GitHub repository is for outside contributors.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700;800&family=Inter:wght@400;700&family=Martian+Mono:wght@400;700&display=swap">
+  <title>DrishtiAI</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+  <header>
+    <h1>DrishtiAI</h1>
+    <p id="model-state" class="pill" data-state="checking">Checking the local model…</p>
+  </header>
+
+  <main>
+    <section class="camera" aria-label="Camera">
+      <video id="video" autoplay playsinline muted aria-label="Live camera preview"></video>
+      <p id="camera-note" class="note" hidden></p>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <div class="modes" role="group" aria-labelledby="mode-label">
+        <h2 id="mode-label" data-i18n="mode">Mode</h2>
+        <button type="button" aria-pressed="true" data-mode="surroundings">
+          <kbd>1</kbd> <span data-i18n="surroundings">Surroundings</span>
+        </button>
+        <button type="button" aria-pressed="false" data-mode="read">
+          <kbd>2</kbd> <span data-i18n="read">Read</span>
+        </button>
+        <button type="button" aria-pressed="false" data-mode="find">
+          <kbd>3</kbd> <span data-i18n="find">Find</span>
+        </button>
+      </div>
+
+      <div id="find-row" class="find-row" hidden>
+        <label for="target" data-i18n="findLabel">What are you looking for?</label>
+        <input id="target" type="text" maxlength="80" autocomplete="off" placeholder="water bottle">
+      </div>
+
+      <button id="describe" class="primary" type="button">
+        <span data-i18n="describe">Describe now</span> <kbd>Space</kbd>
+      </button>
+
+      <div class="row">
+        <button id="stop" type="button"><span data-i18n="stop">Stop speech</span> <kbd>Esc</kbd></button>
+        <button id="language" type="button" aria-label="Language: English. Press to switch to Hindi.">
+          <kbd>L</kbd> <span id="language-name">English</span>
+        </button>
+      </div>
+
+      <div class="row">
+        <button id="auto" type="button" aria-pressed="false">
+          <kbd>A</kbd> <span data-i18n="auto">Auto-monitor (experimental)</span>
+        </button>
+        <label class="volume" for="volume">
+          <span data-i18n="volume">Volume</span>
+          <input id="volume" type="range" min="0" max="1" step="0.1" value="1">
+        </label>
+      </div>
+      <p class="note" data-i18n="autoNote">Auto-monitor only looks again when the picture changes. It can miss things. It is not continuous hazard detection.</p>
+    </section>
+
+    <section class="result" aria-label="Latest description">
+      <p id="status" class="status" role="status" aria-live="polite" data-state="idle">Ready. Press Space to describe.</p>
+
+      <div id="hazards" class="hazards" hidden>
+        <h2><span aria-hidden="true">⚠</span> <span data-i18n="warning">Warning</span></h2>
+        <ul id="hazard-list"></ul>
+      </div>
+
+      <p id="fallback-note" class="note" hidden data-i18n="fallbackNote">Rough description. The model's structured answer was invalid, so no hazards could be checked.</p>
+      <p id="spoken" class="spoken"></p>
+      <p id="meta" class="meta"></p>
+
+      <details>
+        <summary data-i18n="raw">Model output (JSON)</summary>
+        <pre id="raw"></pre>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <p data-i18n="disclaimer">DrishtiAI is an experimental aid. It can be wrong or miss hazards. It does not replace a cane, a guide dog or a human guide.</p>
+  </footer>
 </body>
 </html>

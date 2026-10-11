@@ -1,141 +1,41 @@
-# contributor-ready
+# DrishtiAI
 
-An agent skill that audits a repository for how ready it is to receive outside
-contributions, scores it out of 100, and drafts the files that are missing. It comes
-with a web page that scores any public GitHub repository in the browser.
+An offline scene-description assistant for people with visual impairments. A webcam frame
+goes to an open-weight vision-language model running on your own machine through Ollama;
+the answer comes back as validated JSON and is spoken aloud, hazards first, in English or
+Hindi.
 
-![The web checker scoring a repository](web/public/screenshot.png)
+Built at Hacktoberfest Hack Day Hamirpur x ISTE NITH (11 October 2026) for the Best
+Open-Source AI Project track.
 
-Built for the **Best Open-Source AI Project** track at Hacktoberfest Hack Day
-Hamirpur x ISTE NITH (11 October 2026).
+> **Status: work in progress.** The pipeline, web page and unit tests are in place. The
+> real-model smoke test, evaluation results and full documentation are being added today.
 
-## The problem
-
-Most student and hobby repositories get no contributors, and it is rarely because of the
-code. A stranger opens the repo and finds no setup steps, no license, and no hint of how
-to send a change. During Hacktoberfest this is the gap between a project that gets pull
-requests and one that gets ignored.
-
-## What it does
-
-`contributor-ready` follows the [Agent Skills open standard](https://agentskills.io), so
-any compatible agent can load it. When activated, the agent:
-
-1. Runs `scripts/audit.py`, which checks ten things a new contributor needs.
-2. Reports a score and the failing checks, biggest win first.
-3. Reads the repository to find the real install, run and test commands, then drafts the
-   missing files from the templates in `assets/`.
-4. Runs the audit again and shows the score before and after.
-
-| Check | Points |
-| --- | --- |
-| Open-source license | 20 |
-| README explains the project | 15 |
-| README has setup instructions | 15 |
-| CONTRIBUTING guide | 15 |
-| README has a usage example | 10 |
-| Code of conduct | 5 |
-| Issue template | 5 |
-| Pull request template | 5 |
-| Continuous integration | 5 |
-| .gitignore | 5 |
-
-## Setup
-
-You need Python 3.8 or newer. There are no dependencies to install.
+## Quick start
 
 ```
-git clone https://github.com/Dakshhhhh-ops/hacktober.git
+ollama pull qwen3-vl:2b
+py -3.11 -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python -m piper.download_voices en_US-lessac-medium hi_IN-pratham-medium --download-dir voices
+.venv\Scripts\python -m drishti
 ```
 
-To use it as a skill, copy the `contributor-ready` folder into your agent's skills
-directory. For Claude Code that is `.claude/skills/` in a project or `~/.claude/skills/`
-for every project:
+Then open http://127.0.0.1:8000 and press Space.
+
+## Tests
 
 ```
-cp -r hacktober/contributor-ready ~/.claude/skills/
+.venv\Scripts\python -m unittest discover -s tests -t .
+node --test tests/gate.test.mjs
 ```
 
-## Usage
+## Safety
 
-### In the browser
-
-Use the hosted copy at https://dakshhhhh-ops.github.io/hacktober/, or run it locally
-(needs Node.js 20 or newer):
-
-```
-cd web
-npm install
-npm run dev
-```
-
-Type a repository as `owner/name` or paste its GitHub URL and press Audit. You can then:
-
-- filter the ten checks to only the failing or passing ones,
-- copy the fixes as a Markdown checklist to paste into a GitHub issue,
-- reopen a recent audit from the list under the search box,
-- share a result by adding `?repo=owner/name` to the address.
-
-The page is a React app that runs the same ten checks as the skill, using GitHub's
-public API. No login is needed. GitHub allows about 30 audits an hour per network
-without a login.
-
-`npm test` runs the unit tests for the checks, and `npm run build` rebuilds the site
-into `docs/`, which GitHub Pages serves.
-
-### With an agent
-
-With an agent, open any repository and ask:
-
-> Make this repo ready for Hacktoberfest contributors.
-
-Without an agent, run the audit on its own:
-
-```
-python contributor-ready/scripts/audit.py path/to/repo
-python contributor-ready/scripts/audit.py path/to/repo --json
-```
-
-Example output:
-
-```
-Contributor readiness: 20/100 (not ready)
-
-  [FAIL] README explains the project (15 pts) - README.md has 2 words
-  [PASS] Open-source license (20 pts) - LICENSE
-  [FAIL] CONTRIBUTING guide (15 pts) - no CONTRIBUTING file found
-
-Fix next, biggest win first:
-  +15  Write a README of at least a few paragraphs: what it does and who it is for.
-  +15  Add CONTRIBUTING.md from assets/CONTRIBUTING.md.
-```
-
-## Project layout
-
-```
-contributor-ready/
-  SKILL.md                      instructions the agent follows
-  scripts/audit.py              the audit, standard library only
-  assets/CONTRIBUTING.md        template
-  assets/PULL_REQUEST_TEMPLATE.md
-  assets/bug_report.md
-web/                            the web checker (React + Vite)
-  src/App.jsx                   page state: the query, the audit, recent audits
-  src/components/               form, results, ticker, steps, skill card
-  src/lib/audit.js              the same checks, ported to the browser
-  src/lib/audit.test.js         unit tests for the checks
-  src/styles.css
-docs/                           built site, generated by `npm run build`
-```
-
-## Team and tools
-
-- Daksh ([@Dakshhhhh-ops](https://github.com/Dakshhhhh-ops)): idea, direction, testing
-  and submission.
-- Tools: Python 3 standard library, React, Vite, CSS, the GitHub REST API,
-  Google Fonts, the Agent Skills specification, and Claude Code as
-  the AI coding assistant that wrote the code during the event.
+DrishtiAI is an experimental aid. It can be wrong or miss hazards. It does not replace a
+cane, a guide dog or a human guide.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT for this project's code. See [LICENSE](LICENSE). The model weights and voices have
+their own licences, which the full README will list.
