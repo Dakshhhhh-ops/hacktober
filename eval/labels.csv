@@ -1,1 +1,10 @@
 image,hazards_true,text_true
+synthetic_exit_sign.png,n/a,EXIT
+synthetic_wet_floor.png,n/a,CAUTION WET FLOOR
+synthetic_platform.png,n/a,Platform 2
+synthetic_room_label.png,n/a,Room 204 Computer Lab
+synthetic_medicine.png,n/a,Paracetamol Tablets IP 500 mg
+synthetic_small_text.png,n/a,Keep this door closed
+synthetic_blurred.png,n/a,PUSH TO OPEN
+synthetic_tilted.png,n/a,NO ENTRY
+synthetic_low_contrast.png,n/a,Staff Only

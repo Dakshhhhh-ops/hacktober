@@ -191,11 +191,14 @@ They cover JSON parsing, retry and fallback, invalid enum values and field types
 hazard-first speech, mode filtering, the find result, repeat suppression, the latency
 log, API errors, the evaluation metrics and frame-change gating.
 
-To check the real model end to end:
+To check the real model end to end (needs Ollama running; slow, and not mocked):
 
 ```
-.venv\Scripts\python skill/describe-scene/scripts/describe.py path\to\photo.jpg
+.venv\Scripts\python tests/integration_check.py
 ```
+
+It sends a rendered EXIT sign through the pipeline in Read and Surroundings modes, checks
+that valid JSON came back and the sign was read, and prints the measured latency.
 
 ## 16. Agent Skill
 

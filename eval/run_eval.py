@@ -85,9 +85,14 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[
     for row in rows:
         name = row["image"].strip()
         path = images_dir / name
-        labels = parse_hazard_labels(row.get("hazards_true", ""))
-        text_true = row.get("text_true", "").strip()
-        item = {"image": name, "hazards_true": [s[0] for s in labels], "text_true": text_true,
+        hazard_cell = (row.get("hazards_true") or "").strip()
+        # "n/a" marks an image that is only a reading test (for example rendered text).
+        score_hazards = hazard_cell.lower() != "n/a"
+        labels = parse_hazard_labels(hazard_cell) if score_hazards else []
+        text_true = (row.get("text_true") or "").strip()
+        item = {"image": name, "hazards_scored": score_hazards,
+                "hazards_true": [s[0] for s in labels], "text_true": text_true,
+                "hazards_predicted": [], "detected": [], "missed": [], "false_alarms": [],
                 "failed": False, "error": "", "latencies_ms": []}
         results.append(item)
         if not path.exists():
@@ -95,22 +100,25 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[
             continue
         image_b64 = base64.b64encode(path.read_bytes()).decode()
         try:
-            scene = describe(image_b64, "surroundings", "en")
-            item["latencies_ms"].append(scene.inference_ms)
-            item["status"] = scene.status
-            item["hazards_predicted"] = [h.what for h in scene.scene.hazards]
-            item["summary"] = scene.scene.summary
-            detected, missed, false_alarms = match_hazards(labels, item["hazards_predicted"])
-            item.update(detected=detected, missed=missed, false_alarms=false_alarms)
+            if score_hazards:
+                scene = describe(image_b64, "surroundings", "en")
+                item["latencies_ms"].append(scene.inference_ms)
+                item["status"] = scene.status
+                item["hazards_predicted"] = [h.what for h in scene.scene.hazards]
+                item["summary"] = scene.scene.summary
+                detected, missed, false_alarms = match_hazards(labels, item["hazards_predicted"])
+                item.update(detected=detected, missed=missed, false_alarms=false_alarms)
             if text_true:
                 read = describe(image_b64, "read", "en")
                 item["latencies_ms"].append(read.inference_ms)
+                item.setdefault("status", read.status)
                 item["text_predicted"] = read.scene.text
                 item["text_similarity"] = round(text_similarity(text_true, read.scene.text), 3)
         except vlm.VLMError as err:
             item.update(failed=True, error=str(err))
         print(f"  {name}: " + ("FAILED " + item["error"] if item["failed"] else
-              f"missed={item['missed']} false_alarms={item['false_alarms']}"))
+              f"missed={item['missed']} false_alarms={item['false_alarms']} "
+              f"text_similarity={item.get('text_similarity', 'n/a')}"))
     return results
 
 
@@ -120,11 +128,13 @@ def summarise(results: list[dict]) -> dict:
     missed = sum(len(r["missed"]) for r in done)
     false_alarms = sum(len(r["false_alarms"]) for r in done)
     predicted = sum(len(r["hazards_predicted"]) for r in done)
-    hazard_free = [r for r in done if not r["hazards_true"]]
+    scored = [r for r in done if r["hazards_scored"]]
+    hazard_free = [r for r in scored if not r["hazards_true"]]
     texts = [r["text_similarity"] for r in done if "text_similarity" in r]
     latencies = [ms for r in done for ms in r["latencies_ms"]]
     return {
         "images": len(results),
+        "images_scored_for_hazards": len(scored),
         "failed_inferences": len(results) - len(done),
         "fallbacks": sum(r.get("status") == "fallback" for r in done),
         "hazards_labelled": detected + missed,
@@ -133,7 +143,7 @@ def summarise(results: list[dict]) -> dict:
         "hazard_recall": round(detected / (detected + missed), 3) if detected + missed else None,
         "hazards_predicted": predicted,
         "false_alarms": false_alarms,
-        "false_alarms_per_image": round(false_alarms / len(done), 2) if done else None,
+        "false_alarms_per_image": round(false_alarms / len(scored), 2) if scored else None,
         # Share of the model's hazard reports that matched no labelled hazard.
         "false_alarm_rate": round(false_alarms / predicted, 3) if predicted else None,
         "hazard_free_images": len(hazard_free),
@@ -162,7 +172,7 @@ def to_markdown(summary: dict, results: list[dict], model: str) -> str:
         "",
         "| Metric | Value |",
         "| --- | --- |",
-        f"| Images evaluated | {s['images']} |",
+        f"| Images evaluated | {s['images']} ({s['images_scored_for_hazards']} scored for hazards, {s['text_images']} for reading) |",
         f"| Failed inferences | {s['failed_inferences']} |",
         f"| Plain-text fallbacks (no validated JSON) | {s['fallbacks']} |",
         f"| Hazard recall | {recall} ({s['hazards_detected']} of {s['hazards_labelled']}) |",

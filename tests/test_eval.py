@@ -96,6 +96,14 @@ class EvaluateTests(unittest.TestCase):
         self.assertIn("`b.jpg`: wet floor", markdown)
         self.assertIn("not a statistically meaningful", markdown)
 
+    def test_a_reading_only_image_is_not_scored_for_hazards(self):
+        rows = [{"image": "sign.png", "hazards_true": "n/a", "text_true": "EXIT"}]
+        results, s = self.run_eval_with(rows, [result(text=["EXIT"], ms=900)])
+        self.assertEqual((s["images"], s["images_scored_for_hazards"]), (1, 0))
+        self.assertEqual((s["text_read_correctly"], s["false_alarms"]), (1, 0))
+        self.assertIsNone(s["false_alarms_per_image"])
+        self.assertEqual(s["inferences_timed"], 1)
+
     def test_a_failed_inference_is_counted_not_hidden(self):
         rows = [{"image": "a.jpg", "hazards_true": "stairs", "text_true": ""}]
         _, s = self.run_eval_with(rows, [vlm.VLMError("Ollama is down")])

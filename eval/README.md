@@ -20,7 +20,7 @@ they are the ground truth. The model's answers are never used as labels.
 | Column | Meaning |
 | --- | --- |
 | `image` | File name inside `eval/images/`. |
-| `hazards_true` | Physical hazards a careful person would warn about, separated by `;`. Leave empty if there are none. Give synonyms for one hazard with a vertical bar. |
+| `hazards_true` | Physical hazards a careful person would warn about, separated by `;`. Leave empty if there are none. Give synonyms for one hazard with a vertical bar. Write `n/a` for an image that is only a reading test, so it is not scored for hazards. |
 | `text_true` | The text a person can read in the photo, as one string. Leave empty to skip the reading test for this image. |
 
 Example:
@@ -60,6 +60,13 @@ are lowercased, punctuation is removed and spaces are collapsed; similarity is t
 
 **Latency.** Time spent inside the vision model per request, in milliseconds, including a
 retry if one happened. The median and the 95th percentile (nearest rank) are reported.
+
+## The image set
+
+- `synthetic_*.png` are **rendered text, not photographs**, made by `make_synthetic.py`.
+  They are a fixed reading test with some deliberately hard cases (small, blurred, tilted,
+  low contrast) and are marked `n/a` for hazards.
+- Every other image is a photograph taken by the author at the event and labelled by hand.
 
 ## Limits of this evaluation
 

@@ -1,0 +1,22 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # The unit tests mock the model and the voice engine, so Ollama and Piper are not needed.
+      - run: pip install fastapi uvicorn pydantic
+      - run: python -m unittest discover -s tests -t .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test tests/gate.test.mjs
