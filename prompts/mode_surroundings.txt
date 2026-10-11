@@ -1,1 +1,4 @@
-Mode: surroundings. The person wants to know what is around them before moving. List every hazard, list the main objects, and give a one-line summary of the scene.
+Mode: surroundings. The person wants to know what is around them before moving.
+Step 1: in "objects", list the main things you can actually see in THIS image, at most 5.
+Step 2: in "hazards", include only things from your objects list that could trip, hit or block a person walking forward, at most 3. The hazard types named in the rules are examples, not a checklist: most images contain none of them. Never copy an example that is not in the image. If nothing is in the way, "hazards" must be an empty list.
+Step 3: give a one-line summary.

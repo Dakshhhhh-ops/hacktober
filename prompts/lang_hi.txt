@@ -1,1 +1,0 @@
-Write the "what" and "summary" values, and the "where" of each object, in Hindi using Devanagari script. Keep the JSON keys in English. For hazards, keep "where" and "distance" as the exact English keywords from the schema. Copy visible text into "text" exactly as it is written; do not translate it.

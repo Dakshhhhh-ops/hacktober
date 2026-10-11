@@ -1,0 +1,838 @@
+{
+  "model": "qwen3-vl:2b-instruct",
+  "summary": {
+    "images": 30,
+    "images_scored_for_hazards": 18,
+    "failed_inferences": 0,
+    "fallbacks": 3,
+    "hazards_labelled": 15,
+    "hazards_detected": 9,
+    "hazards_missed": 6,
+    "hazard_recall": 0.6,
+    "hazards_predicted": 53,
+    "false_alarms": 31,
+    "false_alarms_per_image": 1.72,
+    "false_alarm_rate": 0.585,
+    "hazard_free_images": 4,
+    "hazard_free_images_with_alarm": 4,
+    "text_images": 15,
+    "text_mean_similarity": 0.933,
+    "text_read_correctly": 14,
+    "inferences_timed": 33,
+    "latency_median_ms": 2904,
+    "latency_p95_ms": 9916
+  },
+  "images": [
+    {
+      "image": "escalators.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "escalator"
+      ],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "escalator"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        9143
+      ],
+      "status": "fallback",
+      "summary": "What: The image shows a set of escalators in a subway station, with metal and glass railings, and a central platform. The escalators are in a symmetrical arrangement, with lights on the sides and a central light above the escalators. Summary: The scene is a subway station with escalators that are sy"
+    },
+    {
+      "image": "open_manhole.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "open manhole"
+      ],
+      "hazards_optional": [
+        "traffic cone",
+        "car"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "open sewer manhole",
+        "orange and white traffic cone",
+        "white car",
+        "gold SUV",
+        "asphalt road"
+      ],
+      "detected": [
+        "open manhole"
+      ],
+      "missed": [],
+      "false_alarms": [
+        "gold SUV",
+        "asphalt road"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3425
+      ],
+      "status": "ok",
+      "summary": "A street scene with a manhole, cone, and cars, showing hazards near the open sewer."
+    },
+    {
+      "image": "plastic_barriers.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "barrier"
+      ],
+      "hazards_optional": [
+        "person"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs",
+        "open door",
+        "moving people close by",
+        "wet floor"
+      ],
+      "detected": [],
+      "missed": [
+        "barrier"
+      ],
+      "false_alarms": [
+        "stairs",
+        "open door",
+        "moving people close by",
+        "wet floor"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3281
+      ],
+      "status": "ok",
+      "summary": "A red barrier setup on a wet street with people nearby, a building, and a hedge in the background."
+    },
+    {
+      "image": "pothole_1.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "pothole"
+      ],
+      "hazards_optional": [
+        "glove"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "large pothole",
+        "muddy puddle",
+        "black glove",
+        "white painted crosswalk"
+      ],
+      "detected": [
+        "pothole"
+      ],
+      "missed": [],
+      "false_alarms": [
+        "white painted crosswalk"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3290
+      ],
+      "status": "ok",
+      "summary": "A hazardous road surface with a pothole, puddle, and crosswalk, with a glove nearby."
+    },
+    {
+      "image": "pothole_2.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "pothole"
+      ],
+      "hazards_optional": [
+        "barrier"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "hole in the road",
+        "white barricade"
+      ],
+      "detected": [
+        "pothole"
+      ],
+      "missed": [],
+      "false_alarms": [
+        "white barricade"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        9319
+      ],
+      "status": "ok",
+      "summary": "A large hole in the road with a white barricade nearby"
+    },
+    {
+      "image": "puddle_station.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "wet floor"
+      ],
+      "hazards_optional": [
+        "person",
+        "bench"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "wet floor",
+        "stairs",
+        "open doors",
+        "people",
+        "moving people"
+      ],
+      "detected": [
+        "wet floor"
+      ],
+      "missed": [],
+      "false_alarms": [
+        "stairs"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3851
+      ],
+      "status": "ok",
+      "summary": "A wet, indoor area with hazards from the floor, stairs, and people, and a railing on the right."
+    },
+    {
+      "image": "sidewalk_obstruction.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "bicycle"
+      ],
+      "hazards_optional": [
+        "sign",
+        "person",
+        "road"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "bicycle"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        9916
+      ],
+      "status": "fallback",
+      "summary": "What: A row of white and gray bicycles with \"BTB\" logos parked in a bike rack on a sidewalk next to a road. The bicycles are parked in a line, and the road has white lines. There are people walking on the sidewalk, and a sign with a QR code and text is visible on the right side. Summary: The scene s"
+    },
+    {
+      "image": "stair_edge_mall.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "step"
+      ],
+      "hazards_optional": [
+        "tactile"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs",
+        "yellow painted edge",
+        "tactile paving",
+        "open door"
+      ],
+      "detected": [
+        "step"
+      ],
+      "missed": [],
+      "false_alarms": [
+        "yellow painted edge",
+        "open door"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3286
+      ],
+      "status": "ok",
+      "summary": "A blind person is at a station platform with stairs, tactile paving, and a yellow edge, near an open door and railing."
+    },
+    {
+      "image": "stairs_down.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "stairs"
+      ],
+      "hazards_optional": [
+        "person",
+        "railing"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs",
+        "open door",
+        "moving people",
+        "wet floor",
+        "vehicle"
+      ],
+      "detected": [
+        "stairs"
+      ],
+      "missed": [],
+      "false_alarms": [
+        "open door",
+        "wet floor",
+        "vehicle"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3838
+      ],
+      "status": "ok",
+      "summary": "A person is on a wet, metal staircase with people and a red vehicle nearby, and a train track is visible to the left."
+    },
+    {
+      "image": "stairs_pedway.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "stairs"
+      ],
+      "hazards_optional": [
+        "person",
+        "wall"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "stairs"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        10668
+      ],
+      "status": "fallback",
+      "summary": "What: The image shows a concrete subway entrance with stairs leading down into a dark tunnel. There are three people walking down the stairs, and a sign above the entrance reads \"C.T.A. SUBWAY RICHARD J. DALEY CENTER CONCOURSE.\" The surrounding area includes a street with cars, buildings, and a \"PAT"
+    },
+    {
+      "image": "trip_hazard_pavement.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "uneven pavement"
+      ],
+      "hazards_optional": [
+        "wet",
+        "railing"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs",
+        "open door",
+        "wet floor",
+        "obstacle at head level",
+        "moving people close by"
+      ],
+      "detected": [],
+      "missed": [
+        "uneven pavement"
+      ],
+      "false_alarms": [
+        "stairs",
+        "open door",
+        "obstacle at head level",
+        "moving people close by"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3527
+      ],
+      "status": "ok",
+      "summary": "A sidewalk with a puddle, leaves, and shadows, near a fence and a wet area, with potential hazards including stairs and moving people."
+    },
+    {
+      "image": "wet_floor_sign_1.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "wet floor"
+      ],
+      "hazards_optional": [
+        "plant"
+      ],
+      "text_true": "CAUTION WET FLOOR ATTENTION PLANCHER MOUILLÉ",
+      "hazards_predicted": [
+        "wet floor"
+      ],
+      "detected": [
+        "wet floor"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2904,
+        9492
+      ],
+      "status": "ok",
+      "summary": "A wet floor hazard is in the foreground, with a caution sign and various signs and a plant in the background.",
+      "text_predicted": [],
+      "text_similarity": 0.0
+    },
+    {
+      "image": "wet_floor_sign_2.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "wet floor"
+      ],
+      "hazards_optional": [],
+      "text_true": "CAUTION Wet Floor ATTENTION Sol Humide CUIDADO Piso Mojado",
+      "hazards_predicted": [
+        "wet floor"
+      ],
+      "detected": [
+        "wet floor"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2152,
+        1296
+      ],
+      "status": "ok",
+      "summary": "A yellow caution sign on a wet, tiled floor",
+      "text_predicted": [
+        "CAUTION",
+        "Wet Floor",
+        "ATTENTION",
+        "Sol Humide",
+        "CUIDADO",
+        "Piso Mojado"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "wet_floor_sign_3.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "wet floor",
+        "bucket"
+      ],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [
+        "wet floor",
+        "stairs",
+        "open door"
+      ],
+      "detected": [
+        "wet floor"
+      ],
+      "missed": [
+        "bucket"
+      ],
+      "false_alarms": [
+        "stairs",
+        "open door"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2351
+      ],
+      "status": "ok",
+      "summary": "A wet floor hazard with a bucket and warning sign in a commercial area"
+    },
+    {
+      "image": "empty_hallway_1.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "open door",
+        "mat"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs",
+        "open door",
+        "wet floor",
+        "obstacle at head level"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [
+        "stairs",
+        "wet floor",
+        "obstacle at head level"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3545
+      ],
+      "status": "ok",
+      "summary": "A hallway with hazards including stairs, wet floor, and an open door, with a painting on the left and a light fixture above."
+    },
+    {
+      "image": "empty_hallway_2.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "chair"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs",
+        "open door",
+        "wet floor"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [
+        "stairs",
+        "open door",
+        "wet floor"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3001
+      ],
+      "status": "ok",
+      "summary": "A long, empty hallway with stairs, wet floor, and open door ahead, and chairs and tables on the right."
+    },
+    {
+      "image": "empty_hallway_exit.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "door"
+      ],
+      "text_true": "EXIT",
+      "hazards_predicted": [
+        "stairs",
+        "open door",
+        "moving people close by"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [
+        "stairs",
+        "moving people close by"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3247,
+        1652
+      ],
+      "status": "ok",
+      "summary": "A long, carpeted hallway with an exit sign, a door, and a security camera, with stairs and people moving in the distance.",
+      "text_predicted": [
+        "EXIT",
+        "<"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "empty_office.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "door"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs",
+        "open door",
+        "moving people close by",
+        "wet floor"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [
+        "stairs",
+        "moving people close by",
+        "wet floor"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3973
+      ],
+      "status": "ok",
+      "summary": "Empty office room with hazards including stairs, wet floor, and open door, and a window with blinds."
+    },
+    {
+      "image": "exit_sign.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "EXIT",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1835
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "EXIT"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "fire_exit_sign.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "EXIT",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1996
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "EXIT"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "sign_subway.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "1715 02 Down the stairs for subway to platforms 3 or 4 for trains to PUTNEY, WIMBLEDON, RICHMOND, KEW, HAMMERSMITH, EALING",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2809
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "1715 02",
+        "Down the stairs for subway to platforms",
+        "3 or 4 for trains to",
+        "PUTNEY, WIMBLEDON, RICHMOND,",
+        "KEW, HAMMERSMITH, EALING"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_exit_sign.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "EXIT",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1795
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "EXIT"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_wet_floor.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "CAUTION WET FLOOR",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1694
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "CAUTION",
+        "WET FLOOR"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_platform.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "Platform 2",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1910
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "Platform 2"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_room_label.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "Room 204 Computer Lab",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2147
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "Room 204",
+        "Computer Lab"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_medicine.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "Paracetamol Tablets IP 500 mg",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1790
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "Paracetamol Tablets IP",
+        "500 mg"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_small_text.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "Keep this door closed",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1614
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "Keep this door closed"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_blurred.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "PUSH TO OPEN",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1948
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "PUSH TO OPEN"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_tilted.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "NO ENTRY",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1603
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "NO ENTRY"
+      ],
+      "text_similarity": 1.0
+    },
+    {
+      "image": "synthetic_low_contrast.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "Staff Only",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        1555
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "Staff Only"
+      ],
+      "text_similarity": 1.0
+    }
+  ]
+}

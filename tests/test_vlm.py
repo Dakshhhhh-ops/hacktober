@@ -42,6 +42,13 @@ class DescribeTests(unittest.TestCase):
         self.assertEqual(len(post.calls), 1)
         self.assertIn("format", post.calls[0])
 
+    def test_the_reply_schema_caps_objects_but_not_hazards(self):
+        post = fake_post(GOOD)
+        self.describe(post)
+        properties = post.calls[0]["format"]["properties"]
+        self.assertEqual(properties["objects"]["maxItems"], 6)
+        self.assertNotIn("maxItems", properties["hazards"])
+
     def test_json_inside_a_code_fence_is_accepted(self):
         self.assertEqual(self.describe(fake_post(f"```json\n{GOOD}\n```")).status, "ok")
 
@@ -96,10 +103,11 @@ class DescribeTests(unittest.TestCase):
         self.assertEqual(result.status, "fallback")
         self.assertIsNone(result.find_result)
 
-    def test_hindi_prompt_asks_for_devanagari(self):
-        post = fake_post(GOOD)
-        vlm.describe(IMAGE, "surroundings", "hi", post=post, log=False)
-        self.assertIn("Devanagari", post.calls[0]["messages"][1]["content"])
+    def test_the_model_is_asked_in_english_even_for_hindi_output(self):
+        english, hindi = fake_post(GOOD), fake_post(GOOD)
+        vlm.describe(IMAGE, "surroundings", "en", post=english, log=False)
+        vlm.describe(IMAGE, "surroundings", "hi", post=hindi, log=False)
+        self.assertEqual(english.calls[0]["messages"], hindi.calls[0]["messages"])
 
     def test_inference_time_is_the_sum_of_all_attempts(self):
         result = self.describe(fake_post("nope", GOOD))

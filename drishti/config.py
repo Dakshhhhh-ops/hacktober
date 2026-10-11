@@ -31,7 +31,8 @@ def _env(name, default, cast=str):
 OLLAMA_URL = _env("OLLAMA_URL", "http://127.0.0.1:11434")
 MODEL = _env("OLLAMA_MODEL", "qwen3-vl:2b-instruct")
 VLM_TIMEOUT_S = _env("DRISHTI_VLM_TIMEOUT_S", 120, float)
-MAX_TOKENS = _env("DRISHTI_MAX_TOKENS", 400, int)
+MAX_TOKENS = _env("DRISHTI_MAX_TOKENS", 600, int)
+MAX_OBJECTS = 6  # cap on the objects list in the model's reply
 
 # The web server only listens on this machine by default.
 HOST = _env("DRISHTI_HOST", "127.0.0.1")

@@ -130,11 +130,11 @@ ollama pull qwen3-vl:2b-instruct
 | Do not use | the plain `qwen3-vl:2b` tag. It is the *thinking* variant; with this project's prompts it used its whole reply reasoning and returned no answer. The app reports this and tells you which model to pull. |
 | Download size | 1.9 GB |
 | Weights licence | Apache-2.0, as stated on the [model card](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) |
-| Why this one | It was the smallest image-capable model that fit the download time available on the day |
+| Why this one | It was the smallest image-capable model that fit the download time available on the day, and it runs in about 1.5 to 3 s per image on a 6 GB laptop GPU |
 
 Any Ollama model that accepts images can be used by setting `OLLAMA_MODEL`, for example
 `gemma3:4b` (3.4 GB, [Gemma Terms of Use](https://ai.google.dev/gemma/terms)). Only
-`qwen3-vl:2b-instruct` has been tested.
+`qwen3-vl:2b-instruct` has been tested and evaluated.
 
 ## 11. Install the voices
 
@@ -180,7 +180,55 @@ rendered text images. The label format, matching rules and metric definitions ar
 [eval/README.md](eval/README.md). Results from the last run:
 
 <!-- EVAL-RESULTS-START -->
-*No evaluation has been run yet. This section is filled from `eval/results.md`.*
+Model `qwen3-vl:2b-instruct`, 30 images, run 2026-10-11 16:58.
+
+**Missed hazards (false negatives): 1 of 15 labelled hazards.**
+
+| Metric | Value |
+| --- | --- |
+| Images evaluated | 30 (18 scored for hazards, 15 for reading) |
+| Failed inferences | 0 |
+| Plain-text fallbacks (no validated JSON) | 0 |
+| Hazard recall | 93% (14 of 15) |
+| **Missed hazards** | **1** |
+| False alarms | 6 (0.33 per image) |
+| False-alarm rate (false alarms / all hazards the model reported) | 21% (6 of 29) |
+| Hazard-free images that still got a warning | 3 of 4 |
+| Text read correctly (similarity >= 80%) | 14 of 15 |
+| Mean text similarity | 0.975 |
+| Median model latency | 1499 ms |
+| p95 model latency | 2454 ms (33 inferences) |
+
+Missed hazards, by image:
+
+- `trip_hazard_pavement.jpg`: uneven pavement
+
+### What changed between the first run and this one
+
+The first real run used the prompt exactly as first written. The model repeated the
+example hazards from the system prompt ("stairs, open door, wet floor, moving people")
+on almost every image, including empty corridors. The fix was to make it list what it
+sees first, choose hazards only from that list, and to say that the examples are not a
+checklist. Both runs are real and both result files are in the repository.
+
+| | First run ([baseline](eval/baseline/results.md)) | Current |
+| --- | --- | --- |
+| Hazards found | 9 of 15 | 14 of 15 |
+| **Missed hazards** | **6** | **1** |
+| False alarms | 31 | 6 |
+| Hazard-free images that still got a warning | 4 of 4 | 3 of 4 |
+| Plain-text fallbacks | 3 | 0 |
+| Text read correctly | 14 of 15 | 14 of 15 |
+| Median model latency | 2904 ms | 1499 ms |
+
+### How to read these numbers
+
+- **They are optimistic.** The prompt was tuned on these same 30 images, and there is no
+  separate held-out set. Expect worse on new scenes.
+- **False alarms are still common on clear scenes**: 3 of 4 hazard-free images got a warning
+  (a door, a floor, an exit sign). Four images is far too few to estimate a rate.
+- The photographs were chosen because they show a hazard clearly, in daylight.
+- Latency was measured on an RTX 4050 Laptop GPU (6 GB) with the model already loaded.
 <!-- EVAL-RESULTS-END -->
 
 ## 15. Tests
@@ -224,21 +272,30 @@ inspected.
 - Distance words (near, mid, far) are rough visual judgements from one camera. Nothing is
   measured.
 - A summary longer than 25 words is cut short when spoken so it cannot delay a warning.
-- In Hindi mode the model is asked to answer in Hindi; fixed words such as directions are
-  translated by the app.
+- The model is always asked to answer in English, including in Hindi mode. Hindi wording
+  comes from a fixed glossary in `drishti/hindi.py` (see the limitations).
 
 ## 18. Known limitations
 
 <!-- LIMITATIONS-MEASURED -->
-- **It can invent or miss things.** A 2-billion-parameter model hallucinates. See the
-  missed-hazard count in the evaluation.
-- **Latency.** Each description takes seconds, not milliseconds, so it cannot warn about
-  something moving quickly.
+- **It can invent or miss things.** A 2-billion-parameter model hallucinates. In the
+  evaluation it still warned on most hazard-free scenes and missed uneven paving. See
+  section 14.
+- **Latency.** Measured on the development laptop: about 1.5 to 3 s inside the model, then
+  1 to 3 s to synthesise the speech on the CPU. The warning is synthesised first so it
+  starts as early as possible, but this is far too slow for anything moving quickly.
+  The first request after starting is slower because the model has to load.
 - **Auto-monitor is not continuous detection.** It skips frames that look similar, and a
   small change in the picture can still be a new hazard.
 - **Small or curved text** is often misread. Medicine names and doses must be checked by
   another means.
-- **Hindi quality** depends on the model and has not been formally evaluated.
+- **Hindi is glossary-based.** The 2B model cannot write usable Hindi: asked to, it
+  returned broken JSON, and its translations of short phrases were mostly nonsense. So
+  Hindi warnings are built from a fixed glossary of about 100 common words. Adjectives
+  are dropped ("red plastic barriers" becomes "बैरिकेड"), a word that is not in the
+  glossary is spoken in English, and the scene line is a list of recognised objects
+  where English mode gives a sentence. Text read in Read mode is never translated.
+  Hindi output has been checked by reading it, not formally evaluated.
 - **Find by voice** is not implemented; the object name is typed.
 - **Speech volume** is controlled in the page, and speech rate is fixed.
 

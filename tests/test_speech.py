@@ -25,6 +25,14 @@ class BuildSpeechTests(unittest.TestCase):
             "Careful: parked scooter on the right, far.",
         ])
 
+    def test_a_hazard_listed_twice_is_spoken_once(self):
+        twice = Scene.model_validate_json(json.dumps({
+            "hazards": [{"what": "railing", "where": "left", "distance": "near"}] * 2,
+            "objects": [], "text": [], "summary": "",
+        }))
+        hazards, _ = build_speech(twice, "surroundings")
+        self.assertEqual(hazards, ["Careful: railing on the left, near."])
+
     def test_surroundings_speaks_the_summary_but_not_objects_or_text(self):
         _, rest = build_speech(SCENE, "surroundings")
         self.assertEqual(rest, ["A corridor with stairs going down."])
@@ -63,9 +71,28 @@ class BuildSpeechTests(unittest.TestCase):
         _, rest = build_speech(scene, "surroundings")
         self.assertEqual(len(rest[0].split()), 25)
 
-    def test_hindi_uses_hindi_direction_and_distance_words(self):
+    def test_hindi_translates_the_hazard_direction_and_distance(self):
         hazards, _ = build_speech(SCENE, "surroundings", "hi")
-        self.assertEqual(hazards[0], "सावधान: सामने stairs, पास।")
+        self.assertEqual(hazards[0], "सावधान: सामने सीढ़ियाँ, पास।")
+        self.assertEqual(hazards[1], "सावधान: दाईं ओर स्कूटर, दूर।")
+
+    def test_hindi_summary_is_built_from_known_objects(self):
+        _, rest = build_speech(SCENE, "surroundings", "hi")
+        self.assertEqual(rest, ["दिख रहा है: बेंच।"])
+
+    def test_hindi_keeps_an_unknown_word_in_english_instead_of_guessing(self):
+        odd = Scene.model_validate_json(json.dumps({
+            "hazards": [{"what": "gyroscope", "where": "left", "distance": "mid"}],
+            "objects": [], "text": [], "summary": "A lab bench.",
+        }))
+        hazards, rest = build_speech(odd, "surroundings", "hi")
+        self.assertEqual(hazards, ["सावधान: बाईं ओर gyroscope, थोड़ी दूर।"])
+        self.assertEqual(rest, ["A lab bench."])
+
+    def test_hindi_find_translates_the_location(self):
+        found = FindResult(status="found", where="on the table, to the left")
+        _, rest = build_speech(SCENE, "find", "hi", "water bottle", found)
+        self.assertEqual(rest, ["बोतल दिख रहा है: मेज़ पर, बाईं ओर।"])
 
     def test_an_empty_scene_never_claims_it_is_safe(self):
         hazards, rest = build_speech(EMPTY, "surroundings")

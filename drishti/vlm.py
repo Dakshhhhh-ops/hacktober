@@ -44,7 +44,7 @@ def _prompt(name: str) -> str:
 def build_messages(image_b64: str, mode: str, lang: str, target: str = "") -> list[dict]:
     user = "\n\n".join([
         _prompt(f"mode_{mode}").replace("{target}", target.strip() or "unclear"),
-        _prompt(f"lang_{lang}"),
+        _prompt("lang_en"),  # always English: see drishti/hindi.py for why
         _prompt("schema_find" if mode == "find" else "schema"),
     ])
     return [
@@ -91,6 +91,17 @@ def parse_scene(text: str, mode: str = "surroundings") -> Scene:
     return schema.model_validate_json(text[start:end + 1])
 
 
+def generation_schema(model) -> dict:
+    """The JSON schema sent to Ollama to constrain the reply.
+
+    It caps the objects list so a busy scene cannot run past the token limit. Hazards are
+    deliberately not capped: with a cap, the model padded the list by repeating items.
+    """
+    schema = model.model_json_schema()
+    schema["properties"]["objects"]["maxItems"] = config.MAX_OBJECTS
+    return schema
+
+
 def _parse_outcome(error: Exception) -> str:
     return "schema_error" if isinstance(error, ValidationError) else "invalid_json"
 
@@ -110,7 +121,7 @@ def describe(image_b64: str, mode: str = "surroundings", lang: str = "en", targe
         "model": config.MODEL,
         "messages": messages,
         "stream": False,
-        "format": schema.model_json_schema(),
+        "format": generation_schema(schema),
         "keep_alive": "30m",
         "options": {"temperature": 0, "num_predict": config.MAX_TOKENS},
     }
@@ -153,7 +164,7 @@ def describe(image_b64: str, mode: str = "surroundings", lang: str = "en", targe
                 status = "fallback"
                 plain = dict(payload, messages=[{
                     "role": "user",
-                    "content": _prompt("fallback") + "\n" + _prompt(f"lang_{lang}"),
+                    "content": _prompt("fallback") + "\n" + _prompt("lang_en"),
                     "images": [image_b64],
                 }])
                 del plain["format"]

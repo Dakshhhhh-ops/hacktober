@@ -5,7 +5,10 @@ it never says a scene is safe.
 """
 import time
 
+from . import hindi
 from .schema import FindResult, Hazard, Scene
+
+MAX_OBJECTS_SPOKEN = 4
 
 MAX_SUMMARY_WORDS = 25  # a long summary must not delay the next warning
 
@@ -30,21 +33,23 @@ PHRASES = {
     },
     "hi": {
         "hazard": "सावधान: {where} {what}, {distance}।",
-        "found": "{target} मिल गया: {where}।",
-        "found_no_place": "{target} मिल गया।",
+        "found": "{target} दिख रहा है: {where}।",
+        "found_no_place": "{target} दिख रहा है।",
         "not_found": "{target} नहीं दिख रहा।",
         "uncertain": "पक्का नहीं है कि {target} यहाँ है या नहीं।",
         "no_text": "कोई पढ़ने लायक लिखावट नहीं है।",
         "nothing": "कुछ साफ़ नहीं दिख रहा।",
         "fallback": "मोटा विवरण: {summary}",
+        "objects": "दिख रहा है: {objects}।",
     },
 }
 _NEAREST_FIRST = {"near": 0, "mid": 1, "far": 2}
 
 
 def hazard_sentence(hazard: Hazard, lang: str) -> str:
+    what = hazard.what.strip().rstrip(".")
     return PHRASES[lang]["hazard"].format(
-        what=hazard.what.strip().rstrip("."),
+        what=hindi.translate(what) if lang == "hi" else what,
         where=WHERE[lang][hazard.where],
         distance=DISTANCE[lang][hazard.distance],
     )
@@ -64,11 +69,14 @@ def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
     (plain text, no validated JSON) is spoken with a prefix that marks it as rough.
     """
     phrases = PHRASES[lang]
-    hazards = [
+    # dict.fromkeys drops repeats (the model sometimes lists one hazard twice) and keeps order.
+    hazards = list(dict.fromkeys(
         hazard_sentence(h, lang)
         for h in sorted(scene.hazards, key=lambda h: _NEAREST_FIRST[h.distance])
-    ]
+    ))
     summary = _short(scene.summary)
+    if lang == "hi" and not fallback:
+        summary = _hindi_summary(scene) or summary
 
     if fallback:
         rest = [phrases["fallback"].format(summary=summary)] if summary else []
@@ -76,9 +84,11 @@ def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
         lines = [line.strip() for line in scene.text if line.strip()]
         rest = lines or [phrases["no_text"]]
     elif mode == "find" and find_result is not None:
-        name = target.strip()
+        name = hindi.translate(target) if lang == "hi" else target.strip()
         if find_result.status == "found":
             where = find_result.where.strip().rstrip(".")
+            if lang == "hi":
+                where = hindi.translate_place(where)
             key = "found" if where else "found_no_place"
             rest = [phrases[key].format(target=name, where=where)]
         else:
@@ -89,6 +99,16 @@ def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
     if not hazards and not rest:
         rest = [phrases["nothing"]]
     return hazards, rest
+
+
+def _hindi_summary(scene: Scene) -> str:
+    """A Hindi line built from the objects the glossary knows, or "" if it knows none.
+
+    The model's free-text summary is English and cannot be translated reliably offline.
+    """
+    known = [hindi.translate(o.what) for o in scene.objects if hindi.is_known(o.what)]
+    names = list(dict.fromkeys(known))[:MAX_OBJECTS_SPOKEN]
+    return PHRASES["hi"]["objects"].format(objects=", ".join(names)) if names else ""
 
 
 class RepeatFilter:
