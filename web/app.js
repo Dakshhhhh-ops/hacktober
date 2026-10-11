@@ -1,5 +1,6 @@
 // DrishtiAI page logic: camera capture, describe requests, display, speech, shortcuts.
 import { THUMB_SIZE, toGray, frameDifference, shouldDescribe } from "./gate.js";
+import { startListening } from "./voice.js";
 
 const TEXT = {
   en: {
@@ -31,6 +32,12 @@ const TEXT = {
     near: "near", mid: "mid distance", far: "far",
     modelTime: "model", roundTrip: "round trip", retries: "retries",
     tapHint: "Tap the picture to describe",
+    voice: "Voice commands", heard: "Heard:", listening: "Listening…",
+    voiceOn: "Voice commands on. Say describe, read, find, or stop.",
+    voiceOff: "Voice commands off.", askTarget: "What are you looking for?",
+    notUnderstood: "Sorry, I did not catch that.",
+    noMic: "No microphone. Allow microphone access in the browser and try again.",
+    noSpeechModel: "The offline speech model is not installed, so voice commands are unavailable.",
   },
   hi: {
     tagline: "ऑफ़लाइन सहायक जो बताता है कि आपके सामने क्या है",
@@ -61,6 +68,12 @@ const TEXT = {
     near: "पास", mid: "थोड़ी दूर", far: "दूर",
     modelTime: "मॉडल", roundTrip: "कुल समय", retries: "दोबारा कोशिश",
     tapHint: "बताने के लिए तस्वीर पर टैप करें",
+    voice: "आवाज़ से चलाएँ", heard: "सुना:", listening: "सुन रहा हूँ…",
+    voiceOn: "आवाज़ से चलाना चालू। बोलें: बताओ, पढ़ो, खोजो या रुको।",
+    voiceOff: "आवाज़ से चलाना बंद।", askTarget: "आप क्या खोज रहे हैं?",
+    notUnderstood: "माफ़ कीजिए, समझ नहीं आया।",
+    noMic: "माइक्रोफ़ोन नहीं मिला। ब्राउज़र में माइक्रोफ़ोन की अनुमति दें और फिर कोशिश करें।",
+    noSpeechModel: "ऑफ़लाइन स्पीच मॉडल इंस्टॉल नहीं है, इसलिए आवाज़ से चलाना उपलब्ध नहीं है।",
   },
 };
 const ARROWS = { left: "←", right: "→", ahead: "↑", below: "↓" };
@@ -74,7 +87,7 @@ const els = {
   status: $("status"), hazards: $("hazards"), hazardList: $("hazard-list"),
   fallbackNote: $("fallback-note"), spokenLabel: $("spoken-label"), spoken: $("spoken"),
   objectsRow: $("objects-row"), objects: $("objects"), meta: $("meta"), raw: $("raw"),
-  voiceState: $("voice-state"),
+  voiceState: $("voice-state"), voice: $("voice"), heard: $("heard"),
   modeButtons: [...document.querySelectorAll("[data-mode]")],
   langButtons: [...document.querySelectorAll("[data-lang]")],
 };
@@ -95,6 +108,9 @@ const state = {
   voices: null,         // { en: "piper" | "espeak-ng" | null, hi: ... } from the server
   health: null,
   last: null,           // the last answer shown, kept so it can be re-worded in another language
+  stopListening: null,  // set while voice commands are on
+  awaitingTarget: false, // "find" was said without naming the object
+  heardDuringSpeech: false,
 };
 
 const audio = new Audio();
@@ -418,7 +434,7 @@ function stopSpeech(announce = true) {
 
 // ---- Controls -----------------------------------------------------------------
 
-function setMode(mode) {
+function setMode(mode, { focus = true } = {}) {
   state.mode = mode;
   for (const button of els.modeButtons) {
     button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
@@ -426,7 +442,96 @@ function setMode(mode) {
   els.modeBadge.textContent = t(mode);
   els.findRow.hidden = mode !== "find";
   setStatus(`${t("modeNow")} ${t(mode)}`, "idle");
-  if (mode === "find") els.target.focus();
+  if (mode === "find" && focus) els.target.focus();
+}
+
+// ---- Voice commands -----------------------------------------------------------
+
+// Speak one sentence that is not a scene description, such as a question or a notice.
+function say(text) {
+  return speak({ lang: state.lang, speech: { hazards: [], rest: [text] } });
+}
+
+async function onUtterance(pcm) {
+  // What was captured while the app itself was talking is mostly its own voice.
+  const duringSpeech = state.heardDuringSpeech || state.speaking;
+  state.heardDuringSpeech = false;
+  // Try the page's language first, then English, so "describe" also works in Hindi mode
+  // and a missing Hindi speech model does not switch voice control off.
+  const installed = (state.health && state.health.voice) || { en: true };
+  const languages = [...new Set([state.lang, "en"])].filter((lang) => installed[lang]);
+  let result = null;
+  for (const lang of languages) {
+    try {
+      const response = await fetch("/api/listen?lang=" + lang, {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: pcm.buffer,
+      });
+      if (response.ok) result = await response.json();
+    } catch (err) {
+      return;
+    }
+    if (result && result.text) break;
+  }
+  if (!result || !result.text) return;  // noise, or words outside the vocabulary
+  if (duringSpeech && result.command !== "stop") return;
+  els.heard.hidden = false;
+  els.heard.textContent = `${t("heard")} ${result.text}`;
+  runCommand(result);
+}
+
+function runCommand({ command, target }) {
+  if (command === "stop") {
+    state.awaitingTarget = false;
+    stopSpeech();
+  } else if (command === "describe") {
+    setMode("surroundings", { focus: false });
+    describe();
+  } else if (command === "read") {
+    setMode("read", { focus: false });
+    describe();
+  } else if (command === "find" || (state.awaitingTarget && target)) {
+    setMode("find", { focus: false });
+    if (!target) {
+      state.awaitingTarget = true;
+      say(t("askTarget"));
+      return;
+    }
+    state.awaitingTarget = false;
+    els.target.value = target;
+    describe();
+  } else if (command === "repeat") {
+    if (state.last) speak(state.last);
+  } else if (command === "hindi" || command === "english") {
+    setLanguage(command === "hindi" ? "hi" : "en");
+  }
+}
+
+async function toggleVoice() {
+  if (state.stopListening) {
+    state.stopListening();
+    state.stopListening = null;
+    state.awaitingTarget = false;
+    els.voice.setAttribute("aria-pressed", "false");
+    els.heard.hidden = true;
+    setStatus(t("voiceOff"), "idle");
+    return;
+  }
+  if (state.health && state.health.voice && !state.health.voice.hi && !state.health.voice.en) {
+    setStatus(t("noSpeechModel"), "error");
+    return;
+  }
+  try {
+    state.stopListening = await startListening(onUtterance, () => {
+      if (state.speaking) state.heardDuringSpeech = true;
+    });
+  } catch (err) {
+    setStatus(t("noMic"), "error");
+    return;
+  }
+  els.voice.setAttribute("aria-pressed", "true");
+  say(t("voiceOn"));
 }
 
 function toggleAuto() {
@@ -472,6 +577,7 @@ function onKeyDown(event) {
     "3": () => setMode("find"),
     l: () => setLanguage(state.lang === "en" ? "hi" : "en"),
     a: toggleAuto,
+    v: toggleVoice,
     escape: () => stopSpeech(),
   };
   if (actions[key]) {
@@ -509,6 +615,7 @@ document.addEventListener("pointerdown", unlockAudio, { capture: true });
 document.addEventListener("keydown", unlockAudio, { capture: true });
 els.stop.addEventListener("click", () => stopSpeech());
 els.auto.addEventListener("click", toggleAuto);
+els.voice.addEventListener("click", toggleVoice);
 els.volume.addEventListener("input", () => { audio.volume = Number(els.volume.value); });
 document.addEventListener("keydown", onKeyDown);
 

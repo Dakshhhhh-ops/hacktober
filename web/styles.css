@@ -289,8 +289,16 @@ video {
   gap: 10px;
 }
 
-#auto[aria-pressed="true"]::after {
+#auto[aria-pressed="true"]::after,
+#voice[aria-pressed="true"]::after {
   content: " ✓";
+}
+
+.heard {
+  padding: 8px 12px;
+  border: 2px dashed var(--muted);
+  border-radius: 6px;
+  color: var(--text);
 }
 
 .volume {

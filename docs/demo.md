@@ -20,7 +20,7 @@ never a real risk to a person.
 | 2 | Point the camera at a chair or bag in the walkway. Press **Space**. | "It warns about hazards first, then gives one line about the scene." |
 | 3 | Point at the line under the answer. | "That is the measured time inside the model, and the round trip." |
 | 4 | Press **2**, hold up the printed label, press **Space**. | "Read mode. It reads what is visible and does not guess missing words." |
-| 5 | Press **3**, type `water bottle`, press **Enter**. | "Find mode answers found, not found or uncertain. It does not pretend to be sure." |
+| 5 | Press **V**, wait for "Voice commands on", then say **"find my water bottle"**. | "No typing and no tapping: speech is recognised on this laptop too. Find answers found, not found or uncertain." |
 | 6 | Press **L**, then **1**, then **Space**. | "The same scene in Hindi, with a separate offline Hindi voice." |
 | 7 | Open "Model output (JSON)". | "This is the validated JSON. If the model returns invalid JSON, it is retried once, then marked as a rough description. Hazards are never invented." |
 | 8 | In a terminal: `python eval/run_eval.py`, or open `eval/results.md`. | "Missed hazards are counted on their own line, because that is the dangerous failure." |

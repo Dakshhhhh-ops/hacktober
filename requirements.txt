@@ -1,6 +1,9 @@
 fastapi>=0.115
 uvicorn>=0.30
 pydantic>=2.7
-# Offline text-to-speech. If this fails to install, the app still runs and the
-# browser's built-in voice is used instead.
+# Offline text-to-speech. If this fails to install, the app still runs and shows the
+# text, and says that it was not spoken.
 piper-tts>=1.2
+# Offline speech recognition for voice commands. Optional: without it, or without a
+# model in models/, the Voice button reports that it is unavailable.
+vosk>=0.3.45

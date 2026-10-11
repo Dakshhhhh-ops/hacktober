@@ -7,12 +7,12 @@ import binascii
 import mimetypes
 import time
 
-from fastapi import FastAPI
+from fastapi import Body, FastAPI
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import config, tts, vlm
+from . import config, tts, vlm, voice
 from .schema import DescribeResponse, ErrorInfo, FindResult, Lang, Mode, Scene, Speech
 from .speech import RepeatFilter, build_speech, hazard_cards, object_names
 
@@ -80,6 +80,7 @@ def health():
         "model_message": message,
         "model_fix": fix,
         "tts": {lang: tts.engine(lang) for lang in ("en", "hi")},
+        "voice": {lang: voice.available(lang) for lang in ("en", "hi")},
         "change_threshold": config.CHANGE_THRESHOLD,
         "min_interval_s": config.MIN_INTERVAL_S,
     }
@@ -150,6 +151,22 @@ def speak(request: SpeakRequest):
                    f"{config.PIPER_VOICES[request.lang]} --download-dir voices",
         })
     return Response(content=audio, media_type="audio/wav")
+
+
+@app.post("/api/listen")
+def listen(audio: bytes = Body(media_type="application/octet-stream"), lang: Lang = "en"):
+    """Recognise one spoken command. The body is raw 16 kHz, 16-bit mono audio."""
+    limit = voice.SAMPLE_RATE * 2 * voice.MAX_SECONDS
+    if len(audio) < voice.SAMPLE_RATE * 2 // 5 or len(audio) > limit or len(audio) % 2:
+        return JSONResponse(status_code=400, content={
+            "message": f"Send between 0.2 and {voice.MAX_SECONDS} seconds of 16 kHz 16-bit mono audio."})
+    if not voice.available(lang):
+        return JSONResponse(status_code=503, content={
+            "message": f"No offline speech model is installed for '{lang}'.",
+            "fix": f"Download {voice.MODELS[lang]} into the models folder (see the README).",
+        })
+    text = voice.transcribe(audio, lang)
+    return {"text": text, **voice.parse(text, lang)}
 
 
 app.mount("/", StaticFiles(directory=config.WEB_DIR, html=True), name="web")

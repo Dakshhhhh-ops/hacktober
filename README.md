@@ -17,7 +17,8 @@ Best Open-Source AI Project track. *Drishti* (दृष्टि) is Hindi for s
 - **Read**: reads visible text such as signs, labels and packaging.
 - **Find**: you name an object; it answers found, not found or uncertain, with a rough location.
 - Speaks the answer with an offline voice, in English or Hindi.
-- Works from the keyboard alone. Space describes what the camera sees now.
+- Works from the keyboard alone, or by voice alone: say "describe", "read" or
+  "find my bottle". Speech is recognised offline.
 
 ## 2. Problem and intended users
 
@@ -101,6 +102,8 @@ The app, the evaluation and the Agent Skill all call the one function
 | `drishti/schema.py` | The JSON schema and the API envelope |
 | `drishti/speech.py` | What is spoken, in what order; repeat suppression |
 | `drishti/tts.py` | Piper, then espeak-ng |
+| `drishti/voice.py` | Offline voice commands (Vosk) |
+| `drishti/hindi.py` | The Hindi glossary |
 | `drishti/server.py` | The API, bound to loopback |
 | `prompts/` | Every prompt, loaded at run time |
 | `web/` | The page: plain HTML, CSS and JavaScript |
@@ -170,6 +173,39 @@ at all, `espeak-ng` is used when it is on the PATH.
 Open http://127.0.0.1:8000 and allow camera access. The server listens on this machine
 only. The first description after starting is slower because the model is being loaded.
 
+### Voice commands
+
+For someone who cannot see the screen, typing and aiming at buttons are the hard part. Turn
+voice on once (the **Voice commands** button, or **V**), then speak:
+
+| Say | It does |
+| --- | --- |
+| "describe", "look around", "what is in front of me" | Surroundings mode, then describes |
+| "read" | Read mode, then reads the text |
+| "find my water bottle", "where is the door" | Find mode for that object |
+| "find" | Asks "What are you looking for?" and waits for the object |
+| "stop" | Stops the speech |
+| "repeat" | Says the last answer again |
+| "Hindi" / "English" | Switches language |
+
+In Hindi mode the Hindi words work too (बताओ, पढ़ो, खोजो, रुको, दोबारा), and the English
+ones keep working.
+
+Speech is recognised on your machine with [Vosk](https://alphacephei.com/vosk/). The
+browser's own speech recognition is deliberately not used, because it sends audio to a
+cloud service. Download the small models once (about 40 MB each) and unzip them into
+`models/`:
+
+```
+https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+https://alphacephei.com/vosk/models/vosk-model-small-hi-0.22.zip
+```
+
+Recognition is limited to a vocabulary of about 150 words: the commands and everyday object names. That
+keeps it reliable in a noisy room, and it means an object outside that list cannot be
+asked for by voice; type it in the Find box. While the app is speaking it only listens
+for "stop".
+
 ### Use a phone as the camera
 
 ```
@@ -201,6 +237,7 @@ does not load, allow Python through the firewall when Windows asks.
 | 1 / 2 / 3 | Surroundings / Read / Find |
 | L | Switch between English and Hindi (also the buttons at the top right) |
 | A | Auto-monitor on or off (experimental) |
+| V | Voice commands on or off |
 | Esc | Stop speech |
 | Enter (in the Find box) | Search for what you typed |
 
@@ -272,10 +309,10 @@ checklist. Both runs are real and both result files are in the repository.
 
 ```
 .venv\Scripts\python -m unittest discover -s tests -t .
-node --test tests/gate.test.mjs
+node --test tests/gate.test.mjs tests/voice.test.mjs
 ```
 
-The unit tests mock Ollama and the voice engine, so they need no model and play no audio.
+The unit tests mock Ollama, the voice engine and the speech recogniser, so they need no model and play no audio.
 They cover JSON parsing, retry and fallback, invalid enum values and field types,
 hazard-first speech, mode filtering, the find result, repeat suppression, the latency
 log, API errors, the evaluation metrics and frame-change gating.
@@ -333,7 +370,8 @@ inspected.
   glossary is spoken in English, and the scene line is a list of recognised objects
   where English mode gives a sentence. Text read in Read mode is never translated.
   Hindi output has been checked by reading it, not formally evaluated.
-- **Find by voice** is not implemented; the object name is typed.
+- **Voice commands know a fixed vocabulary.** An object outside it has to be typed, and
+  recognition has only been tested with clear speech, not measured in a noisy room.
 - **Speech volume** is controlled in the page, and speech rate is fixed.
 
 ## 19. Safety disclaimer
@@ -374,6 +412,9 @@ not offer to translate it through a cloud service.
   - `hi_IN-pratham-medium`: its model card lists
     [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/), which does not
     allow commercial use.
+- **Vosk** (speech recognition): Apache-2.0. Its models are downloaded separately and are
+  not included here; each model's licence is listed on the
+  [Vosk models page](https://alphacephei.com/vosk/models).
 - **FastAPI** and **Pydantic**: MIT. **Uvicorn**: BSD-3-Clause.
 - **Evaluation photographs** in `eval/images/`: from Wikimedia Commons under CC0, CC BY,
   CC BY-SA or public domain. Authors and licences are in [eval/SOURCES.md](eval/SOURCES.md).
