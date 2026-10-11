@@ -102,7 +102,7 @@ The app, the evaluation and the Agent Skill all call the one function
 | `drishti/schema.py` | The JSON schema and the API envelope |
 | `drishti/speech.py` | What is spoken, in what order; repeat suppression |
 | `drishti/tts.py` | Piper, then espeak-ng |
-| `drishti/voice.py` | Offline voice commands (Vosk) |
+| `drishti/voice.py` | Offline voice commands (Whisper, or Vosk as a fallback) |
 | `drishti/hindi.py` | The Hindi glossary |
 | `drishti/server.py` | The API, bound to loopback |
 | `prompts/` | Every prompt, loaded at run time |
@@ -194,20 +194,32 @@ short words. In a test with synthesised speech these were recognised: बता�
 पढ़ो (read), "बोतल कहां है" (find), बस / "बंद करो" / "रुक जाओ" (stop), दोबारा (repeat)
 and हिंदी. On their own, रुको and खोजो were sometimes missed.
 
-Speech is recognised on your machine with [Vosk](https://alphacephei.com/vosk/). The
-browser's own speech recognition is deliberately not used, because it sends audio to a
-cloud service. Download the small models once (about 40 MB each) and unzip them into
-`models/`:
+Speech is recognised on your machine. The browser's own speech recognition is
+deliberately not used, because it sends audio to a cloud service.
+
+The recogniser is [Whisper](https://github.com/openai/whisper) (the `base` model, 142 MB,
+through `faster-whisper`), running on the CPU. Download it once:
 
 ```
-https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
-https://alphacephei.com/vosk/models/vosk-model-small-hi-0.22.zip
+.venv\Scripts\python -c "from faster_whisper import WhisperModel; WhisperModel('base', device='cpu', compute_type='int8', download_root='models/whisper')"
 ```
 
-Recognition is limited to a vocabulary of about 150 words: the commands and everyday object names. That
-keeps it reliable in a noisy room, and it means an object outside that list cannot be
-asked for by voice; type it in the Find box. While the app is speaking it only listens
-for "stop".
+At run time it is loaded with network access switched off. Whisper is open vocabulary, so
+you can ask for any object ("find my blue backpack"), and it copes with natural sentences
+and background noise. It takes about one second per command on the development laptop.
+
+If Whisper is not installed, the app falls back to [Vosk](https://alphacephei.com/vosk/)
+when its small models are unzipped into `models/`. Vosk is faster but only knows a fixed
+list of about 150 words and was noticeably weaker with a real voice, which is why it was
+replaced as the default.
+
+Each language uses the recogniser that did better for it. For English that is Whisper.
+For short Hindi commands the base Whisper model was worse than Vosk's word list (4 of 8
+against 7 of 8), so Hindi tries Vosk first and Whisper second.
+
+Measured with synthesised speech, ten English sentences at three noise levels: Whisper
+understood 29 of 30, Vosk 23 of 30. That is clean test audio, not a study of real voices
+in a real room. While the app is speaking it only listens for "stop".
 
 ### Use a phone as the camera
 
@@ -373,8 +385,8 @@ inspected.
   glossary is spoken in English, and the scene line is a list of recognised objects
   where English mode gives a sentence. Text read in Read mode is never translated.
   Hindi output has been checked by reading it, not formally evaluated.
-- **Voice commands know a fixed vocabulary.** An object outside it has to be typed, and
-  recognition has only been tested with clear speech, not measured in a noisy room.
+- **Voice commands add about a second**, and recognition has only been tested with
+  synthesised speech, not measured with real voices in a noisy room.
 - **Speech volume** is controlled in the page, and speech rate is fixed.
 
 ## 19. Safety disclaimer
@@ -415,9 +427,9 @@ not offer to translate it through a cloud service.
   - `hi_IN-pratham-medium`: its model card lists
     [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/), which does not
     allow commercial use.
-- **Vosk** (speech recognition): Apache-2.0. Its models are downloaded separately and are
-  not included here; each model's licence is listed on the
-  [Vosk models page](https://alphacephei.com/vosk/models).
+- **Whisper** model weights and **faster-whisper**: MIT. **Vosk** (fallback): Apache-2.0.
+  Speech models are downloaded separately and are not included here; each Vosk model's
+  licence is listed on the [Vosk models page](https://alphacephei.com/vosk/models).
 - **FastAPI** and **Pydantic**: MIT. **Uvicorn**: BSD-3-Clause.
 - **Evaluation photographs** in `eval/images/`: from Wikimedia Commons under CC0, CC BY,
   CC BY-SA or public domain. Authors and licences are in [eval/SOURCES.md](eval/SOURCES.md).

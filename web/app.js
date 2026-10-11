@@ -462,23 +462,30 @@ async function onUtterance(pcm) {
   const languages = [...new Set([state.lang, "en"])].filter((lang) => installed[lang]);
   let result = null;
   for (const lang of languages) {
+    let attempt = null;
     try {
       const response = await fetch("/api/listen?lang=" + lang, {
         method: "POST",
         headers: { "Content-Type": "application/octet-stream" },
         body: pcm.buffer,
       });
-      if (response.ok) result = await response.json();
+      if (response.ok) attempt = await response.json();
     } catch (err) {
-      return;
+      break;
     }
-    if (result && result.text) break;
+    if (!attempt || !attempt.text) continue;
+    if (!result) result = attempt;  // keep the first thing heard, in case nothing is a command
+    if (attempt.command) { result = attempt; break; }
   }
-  if (!result || !result.text) return;  // noise, or words outside the vocabulary
-  if (duringSpeech && result.command !== "stop") return;
+  if (duringSpeech && (!result || result.command !== "stop")) return;
   els.heard.hidden = false;
-  els.heard.textContent = `${t("heard")} ${result.text}`;
-  runCommand(result);
+  if (!result) {  // noise, or nothing recognisable
+    els.heard.textContent = t("listening");
+    return;
+  }
+  const understood = result.command || (state.awaitingTarget && result.target);
+  els.heard.textContent = `${t("heard")} “${result.text}”` + (understood ? "" : ` · ${t("notUnderstood")}`);
+  if (understood) runCommand(result);
 }
 
 function runCommand({ command, target }) {
@@ -524,7 +531,13 @@ async function toggleVoice() {
   }
   try {
     state.stopListening = await startListening(onUtterance, () => {
-      if (state.speaking) state.heardDuringSpeech = true;
+      if (state.speaking) {
+        state.heardDuringSpeech = true;
+      } else {
+        // Show that the microphone has picked something up, before it is recognised.
+        els.heard.hidden = false;
+        els.heard.textContent = t("listening");
+      }
     });
   } catch (err) {
     setStatus(t("noMic"), "error");

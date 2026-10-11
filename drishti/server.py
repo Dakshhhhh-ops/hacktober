@@ -81,6 +81,7 @@ def health():
         "model_fix": fix,
         "tts": {lang: tts.engine(lang) for lang in ("en", "hi")},
         "voice": {lang: voice.available(lang) for lang in ("en", "hi")},
+        "voice_engine": voice.engine("en"),
         "change_threshold": config.CHANGE_THRESHOLD,
         "min_interval_s": config.MIN_INTERVAL_S,
     }
@@ -163,10 +164,9 @@ def listen(audio: bytes = Body(media_type="application/octet-stream"), lang: Lan
     if not voice.available(lang):
         return JSONResponse(status_code=503, content={
             "message": f"No offline speech model is installed for '{lang}'.",
-            "fix": f"Download {voice.MODELS[lang]} into the models folder (see the README).",
+            "fix": "Download a speech model into the models folder (see the README).",
         })
-    text = voice.transcribe(audio, lang)
-    return {"text": text, **voice.parse(text, lang)}
+    return voice.recognise(audio, lang)
 
 
 app.mount("/", StaticFiles(directory=config.WEB_DIR, html=True), name="web")

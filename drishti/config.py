@@ -54,6 +54,11 @@ PIPER_VOICES = {
 }
 ESPEAK_VOICES = {"en": "en", "hi": "hi"}
 
+# Speech recognition for voice commands: the Whisper model size (tiny, base, small).
+# Larger is more accurate and slower. It runs on the CPU.
+WHISPER_MODEL = _env("WHISPER_MODEL", "base")
+WHISPER_THREADS = _env("WHISPER_THREADS", 8, int)
+
 PROMPTS_DIR = ROOT / "prompts"
 WEB_DIR = ROOT / "web"
 VOICES_DIR = ROOT / "voices"
