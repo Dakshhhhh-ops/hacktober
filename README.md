@@ -57,6 +57,8 @@ fully local reference pipeline to build on.
 <!-- DEMO-GIF: record a short screen capture and save it as docs/demo.gif -->
 *Demo recording: to be added.*
 
+The live walk-through is scripted in [docs/demo.md](docs/demo.md).
+
 ## 6. Architecture
 
 ```mermaid
