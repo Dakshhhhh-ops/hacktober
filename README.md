@@ -289,7 +289,5 @@ why it is needed. Changes that affect what is spoken should come with a test in
 
 ## How it was built
 
-Built during the hack day by Daksh ([@Dakshhhhh-ops](https://github.com/Dakshhhhh-ops)),
-who chose the idea, set the constraints and tested it, with Claude Code as the AI coding
-assistant that wrote most of the code. Tools: Python, FastAPI, Pydantic, Ollama,
-Qwen3-VL, Piper.
+Built during the hack day by Daksh ([@Dakshhhhh-ops](https://github.com/Dakshhhhh-ops)).
+Tools: Python, FastAPI, Pydantic, Ollama, Qwen3-VL, Piper.

@@ -20,6 +20,7 @@ const TEXT = {
     noVoice: "No offline voice is installed, so this was not spoken:",
     playFailed: "The audio could not be played, so this was not spoken:",
     modelReady: "ready (local)", languageName: "English",
+    voices: "Offline voices:", voiceMissing: "not installed (text only)",
     languageLabel: "Language: English. Press to switch to Hindi.",
   },
   hi: {
@@ -40,6 +41,7 @@ const TEXT = {
     noVoice: "ऑफ़लाइन आवाज़ इंस्टॉल नहीं है, इसलिए यह बोला नहीं गया:",
     playFailed: "ऑडियो नहीं चल सका, इसलिए यह बोला नहीं गया:",
     modelReady: "तैयार (लोकल)", languageName: "हिन्दी",
+    voices: "ऑफ़लाइन आवाज़ें:", voiceMissing: "इंस्टॉल नहीं (सिर्फ़ टेक्स्ट)",
     languageLabel: "भाषा: हिन्दी। अंग्रेज़ी के लिए दबाएँ।",
   },
 };
@@ -50,7 +52,7 @@ const els = {
   findRow: $("find-row"), target: $("target"), describe: $("describe"), stop: $("stop"),
   language: $("language"), languageName: $("language-name"), auto: $("auto"), volume: $("volume"),
   status: $("status"), hazards: $("hazards"), hazardList: $("hazard-list"),
-  fallbackNote: $("fallback-note"), spoken: $("spoken"), meta: $("meta"), raw: $("raw"),
+  fallbackNote: $("fallback-note"), voiceState: $("voice-state"), spoken: $("spoken"), meta: $("meta"), raw: $("raw"),
   modeButtons: [...document.querySelectorAll("[data-mode]")],
 };
 
@@ -67,6 +69,7 @@ const state = {
   threshold: 12,
   minIntervalMs: 4000,
   speechRun: 0,         // bumped to cancel whatever is being spoken
+  voices: null,         // { en: "piper" | "espeak-ng" | null, hi: ... } from the server
 };
 
 const audio = new Audio();
@@ -86,6 +89,14 @@ function applyLanguage() {
   for (const node of document.querySelectorAll("[data-i18n]")) node.textContent = t(node.dataset.i18n);
   els.languageName.textContent = t("languageName");
   els.language.setAttribute("aria-label", t("languageLabel"));
+  showVoices();
+}
+
+// Say which languages really have an offline voice installed.
+function showVoices() {
+  if (!state.voices) return;
+  const describeVoice = (lang) => `${TEXT[lang].languageName}: ${state.voices[lang] || t("voiceMissing")}`;
+  els.voiceState.textContent = `${t("voices")} ${describeVoice("en")} · ${describeVoice("hi")}`;
 }
 
 // ---- Camera -------------------------------------------------------------------
@@ -352,6 +363,8 @@ async function checkHealth() {
     const health = await (await fetch("/api/health")).json();
     state.threshold = health.change_threshold;
     state.minIntervalMs = health.min_interval_s * 1000;
+    state.voices = health.tts;
+    showVoices();
     if (health.model_ok) {
       els.modelState.textContent = `${health.model} ${t("modelReady")}`;
       els.modelState.dataset.state = "ok";
