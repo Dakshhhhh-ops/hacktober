@@ -677,6 +677,31 @@ async function toggleVoice() {
   say(t("voiceOn"));
 }
 
+// ---- Keep the screen on ----------------------------------------------------------
+// On a phone the screen sleeps after a short time, and the camera stops with it, so walk
+// mode and live Find would go quiet without a word. While either runs, the page asks the
+// browser to keep the screen on. The browser drops the request when the page is hidden,
+// so it is asked again when the page comes back.
+
+let wakeLock = null;
+
+async function updateWakeLock() {
+  const wanted = (state.walk || Boolean(state.search)) && !document.hidden;
+  try {
+    if (wanted && !wakeLock && navigator.wakeLock) {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } else if (!wanted && wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch (err) {
+    wakeLock = null;  // not supported, or refused (for example on battery saver)
+  }
+}
+
+document.addEventListener("visibilitychange", updateWakeLock);
+
 // ---- Live Find ----------------------------------------------------------------
 // For objects the detector knows (a bottle, a phone, a bag), the page checks a few times a
 // second while the person turns the camera, and says where the object is whenever that
@@ -712,6 +737,7 @@ async function startSearch(target) {
   if (first.found) await searchStep(first);
   else say(t("searching"));
   if (state.search) state.search.timer = setInterval(searchTick, SEARCH_TICK_MS);
+  updateWakeLock();
   return true;
 }
 
@@ -720,6 +746,7 @@ function stopSearch(announce = true) {
   if (!state.search) return;
   clearInterval(state.search.timer);
   state.search = null;
+  updateWakeLock();
   if (announce) setStatus(t("searchDone"), "idle");
 }
 
@@ -804,6 +831,7 @@ async function toggleWalk() {
   }
   state.walk = !state.walk;
   state.walkTrouble = { since: 0, lastSaid: -Infinity };
+  updateWakeLock();
   els.walk.setAttribute("aria-pressed", String(state.walk));
   els.walkNote.hidden = !state.walk;
   const message = t(state.walk ? "walkOn" : "walkOff");

@@ -300,6 +300,10 @@ speaker. Nothing goes to the internet.
 
 The first-time setup (opening the address and accepting the certificate and permissions)
 needs a sighted helper or a screen reader. After that the phone remembers the permissions.
+The helper can also choose "Add to Home screen" (or "Install app") in the browser menu:
+DrishtiAI then opens full-screen from its own icon. While walk mode or a live Find is
+running, the page keeps the phone's screen on, because the camera stops when the screen
+sleeps and the warnings would stop with it.
 
 Phone mode listens on the whole local network, but only a device that opened the link
 with the key can use it; anything else gets "403 Forbidden". The phone keeps the key in a

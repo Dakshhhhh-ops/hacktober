@@ -196,3 +196,19 @@ class BlurryFrameTests(unittest.TestCase):
         self.assertTrue(response.blurry)
         self.assertIn("blurred", response.speech.rest[0])
         self.assertEqual(response.speech.hazards, ["Careful: stairs ahead, near."])
+
+
+class InstallableTests(unittest.TestCase):
+    def test_the_manifest_and_icon_are_served_with_the_right_types(self):
+        from fastapi.testclient import TestClient
+        client = TestClient(server.app)
+        manifest = client.get("/manifest.webmanifest")
+        self.assertEqual(manifest.status_code, 200)
+        self.assertTrue(manifest.headers["content-type"].startswith("application/manifest+json"))
+        self.assertEqual(manifest.json()["display"], "standalone")
+        icon = client.get("/icon.svg")
+        self.assertTrue(icon.headers["content-type"].startswith("image/svg+xml"))
+
+    def test_the_page_asks_for_the_manifest_with_the_access_cookie(self):
+        page = (server.config.WEB_DIR / "index.html").read_text(encoding="utf-8")
+        self.assertIn('rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials"', page)

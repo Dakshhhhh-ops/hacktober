@@ -22,6 +22,7 @@ from .speech import (RepeatFilter, build_speech, hazard_cards, hazard_sentence, 
 
 # Windows sometimes maps .js to text/plain, which browsers refuse for module scripts.
 mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 app = FastAPI(title="DrishtiAI")
 repeats = RepeatFilter(config.REPEAT_SUPPRESS_S)
