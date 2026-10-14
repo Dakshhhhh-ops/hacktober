@@ -14,7 +14,8 @@ from . import config
 
 _piper_voices = {}
 # Short sentences are spoken again and again ("Careful: vehicle ahead, near."), so their
-# audio is kept. Synthesis takes up to a few seconds on the CPU; a cached clip is instant.
+# audio is kept. Synthesis is 0.1-0.2 s on an idle CPU, much more on a busy one; a
+# cached clip is instant.
 _cache: OrderedDict[tuple[str, str], bytes] = OrderedDict()
 _cache_lock = threading.Lock()
 CACHE_SIZE = 300

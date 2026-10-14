@@ -200,7 +200,7 @@ Press **W** or say "walk". About three times a second the page sends a small fra
 detector answers in 20 to 60 ms, and the app says things like "Careful: vehicle ahead,
 near." It warns about anything near, and about things at mid distance straight ahead; it
 does not repeat the same warning within 6 seconds. Warnings are synthesised when the
-server starts and kept, so they play at once instead of after 1 to 3 s of synthesis.
+server starts and kept, so they play at once, with no synthesis at all.
 
 What it can and cannot do:
 
@@ -511,9 +511,11 @@ inspected.
 - **Money mode can be wrong.** It got 17 of 18 test images right, but on a messy pile of
   notes it named values that were not there. Count important amounts another way too.
   It does not check whether a note is genuine.
-- **Latency.** Measured on the development laptop: about 1.5 to 3 s inside the model, then
-  1 to 3 s to synthesise the speech on the CPU. The warning is synthesised first so it
-  starts as early as possible, but this is far too slow for anything moving quickly.
+- **Latency.** Measured on the development laptop: about 1.5 to 4 s inside the model. The
+  speech itself is quick once the voices are loaded: 0.1 to 0.2 s for a sentence in
+  English or Hindi (loading the Hindi voice the first time takes about 3 s, which the app
+  does at start-up). The warning is synthesised first so it starts as early as possible,
+  but the model is far too slow for anything moving quickly.
   The first request after starting is slower because the model has to load. Walk mode and
   live Find use a small detector instead and answer in 20 to 60 ms, and common warnings
   are kept ready as audio, so they play at once.
