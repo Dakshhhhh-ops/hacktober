@@ -382,6 +382,28 @@ limit, and outside Read mode only four short lines of text are allowed (Money mo
 none). Held-out recall went from 70% to 90% with no fallbacks; on the street with cows the
 answer went from a 15 to 18 s fallback with no warning to a correct warning in about 3.5 s.
 
+### Picture size
+
+The page sends the model frames at most 768 px on the longer side. Would smaller frames be
+faster? Measured with the GPU to itself (`run_eval.py --max-side`):
+
+| | 768 px (what the page sends) | 512 px |
+| --- | --- | --- |
+| Held-out: hazards found | **10 of 10** | 8 of 10 |
+| Held-out: boards read | 2 of 2 | 1 of 2 |
+| Held-out: median latency | 2.3 s | 2.4 s |
+| Tuning: hazards found | 14 of 15 | 14 of 15 |
+| Tuning: median latency | 1.8 s | 1.7 s |
+
+No: 512 px saved almost no time and missed a puddle on a Bihar road and an open drain in
+Delhi, the low, on-the-ground hazards that need detail. Ollama gives this model at least
+1024 image tokens whatever the picture size, so a smaller frame costs about the same. The
+page stays at 768 px.
+
+The held-out run at 768 px found all 10 hazards, where the run in the table above found 9.
+The same model on the same photos does not always answer the same way, even with sampling
+switched off, so differences of one image between runs are noise.
+
 ### Other models
 
 The same code, prompts and images were run with two other models that fit a 6 GB GPU
