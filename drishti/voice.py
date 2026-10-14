@@ -70,6 +70,9 @@ HINDI_OBJECTS = {
     "मेज़": "table", "सीढ़ी": "stairs", "सीढ़ियां": "stairs", "लैपटॉप": "laptop", "कप": "cup",
     "गाड़ी": "car", "दवा": "medicine", "दवाई": "medicine", "चश्मा": "glasses", "घड़ी": "watch",
     "जूते": "shoes", "पेन": "pen", "आदमी": "person", "कुत्ता": "dog", "खिड़की": "window",
+    "मोबाइल": "phone", "गिलास": "glass", "चम्मच": "spoon", "कैंची": "scissors", "छाता": "umbrella",
+    "रिमोट": "remote", "पर्स": "purse", "कटोरी": "bowl", "चाकू": "knife", "बिल्ली": "cat",
+    "साइकिल": "bicycle", "स्कूटर": "scooter", "टीवी": "tv",
 }
 # Shown to Whisper as context, which makes the command words more likely to be heard right.
 WHISPER_HINTS = {

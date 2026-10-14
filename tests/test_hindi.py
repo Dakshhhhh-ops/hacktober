@@ -29,3 +29,15 @@ class GlossaryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FindWordsTests(unittest.TestCase):
+    def test_every_object_live_find_knows_has_a_hindi_name(self):
+        from drishti import detector
+        missing = [word for word in detector.FINDABLE if not hindi.is_known(word)]
+        self.assertEqual(missing, [])
+
+    def test_saying_a_hindi_object_name_finds_it(self):
+        from drishti import voice
+        self.assertEqual(voice.parse("कैंची कहां है", "hi"), {"command": "find", "target": "scissors"})
+        self.assertEqual(voice.parse("मेरा मोबाइल कहां है", "hi"), {"command": "find", "target": "phone"})

@@ -39,6 +39,14 @@ GLOSSARY = {
     "book": "किताब", "window": "खिड़की", "floor": "फ़र्श", "road": "सड़क", "lamp": "बत्ती",
     "light": "बत्ती", "fan": "पंखा", "screen": "स्क्रीन", "corridor": "गलियारा",
     "hallway": "गलियारा", "room": "कमरा",
+    # things a person may ask Find for (live Find speaks these names)
+    "mug": "मग", "tumbler": "गिलास", "mobile": "मोबाइल", "handbag": "पर्स", "purse": "पर्स",
+    "suitcase": "सूटकेस", "keyboard": "कीबोर्ड", "mouse": "माउस", "remote": "रिमोट",
+    "television": "टीवी", "tv": "टीवी", "clock": "घड़ी", "umbrella": "छाता",
+    "toilet": "शौचालय", "sink": "सिंक", "refrigerator": "फ़्रिज", "fridge": "फ़्रिज",
+    "microwave": "माइक्रोवेव", "bowl": "कटोरी", "spoon": "चम्मच", "knife": "चाकू",
+    "fork": "काँटा", "scissors": "कैंची", "toothbrush": "टूथब्रश", "cat": "बिल्ली",
+    "cycle": "साइकिल",
 }
 # Words for where something is, used in Find mode.
 PLACES = {
