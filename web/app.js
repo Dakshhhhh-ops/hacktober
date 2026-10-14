@@ -1,5 +1,6 @@
 // DrishtiAI page logic: camera capture, describe requests, display, speech, shortcuts.
 import { THUMB_SIZE, toGray, frameDifference, shouldDescribe } from "./gate.js";
+import { QUALITY_WIDTH, frameStats, judgeFrame } from "./quality.js";
 import { startListening } from "./voice.js";
 
 const TEXT = {
@@ -40,6 +41,8 @@ const TEXT = {
     notUnderstood: "Sorry, I did not catch that.",
     noMic: "No microphone. Allow microphone access in the browser and try again.",
     noSpeechModel: "The offline speech model is not installed, so voice commands are unavailable.",
+    tooDark: "It is too dark to see. Turn on a light, or check that nothing is covering the camera.",
+    uniformFrame: "I cannot see anything. The camera may be covered, or pointing at a blank surface.",
   },
   hi: {
     tagline: "ऑफ़लाइन सहायक जो बताता है कि आपके सामने क्या है",
@@ -78,6 +81,8 @@ const TEXT = {
     notUnderstood: "माफ़ कीजिए, समझ नहीं आया।",
     noMic: "माइक्रोफ़ोन नहीं मिला। ब्राउज़र में माइक्रोफ़ोन की अनुमति दें और फिर कोशिश करें।",
     noSpeechModel: "ऑफ़लाइन स्पीच मॉडल इंस्टॉल नहीं है, इसलिए आवाज़ से चलाना उपलब्ध नहीं है।",
+    tooDark: "बहुत अँधेरा है, कुछ नहीं दिख रहा। बत्ती जलाएँ, या देखें कि कैमरा ढका तो नहीं है।",
+    uniformFrame: "कुछ नहीं दिख रहा। कैमरा ढका हो सकता है, या किसी सादी सतह की ओर है।",
   },
 };
 const ARROWS = { left: "←", right: "→", ahead: "↑", below: "↓" };
@@ -149,6 +154,7 @@ function vibrate(pattern) {
 const frameCanvas = document.createElement("canvas");
 const thumbCanvas = document.createElement("canvas");
 thumbCanvas.width = thumbCanvas.height = THUMB_SIZE;
+const qualityCanvas = document.createElement("canvas");
 
 const t = (key) => TEXT[state.lang][key];
 
@@ -213,7 +219,7 @@ async function setLanguage(lang) {
   try {
     const data = await postJson("/api/render", {
       scene: previous.scene, mode: previous.mode, lang, target: previous.target,
-      find_result: previous.find_result, money: previous.money || [],
+      find_result: previous.find_result, money: previous.money || [], blurry: previous.blurry,
       fallback: previous.status === "fallback",
     });
     if (!data.status || data.status === "error") return;
@@ -247,6 +253,17 @@ function currentThumb() {
   const ctx = thumbCanvas.getContext("2d", { willReadFrequently: true });
   ctx.drawImage(els.video, 0, 0, THUMB_SIZE, THUMB_SIZE);
   return toGray(ctx.getImageData(0, 0, THUMB_SIZE, THUMB_SIZE).data);
+}
+
+// "ok", "blurry", "dark" or "uniform", measured on a small grey copy of the frame.
+function frameQuality() {
+  const width = QUALITY_WIDTH;
+  const height = Math.max(1, Math.round(width * els.video.videoHeight / els.video.videoWidth));
+  qualityCanvas.width = width;
+  qualityCanvas.height = height;
+  const ctx = qualityCanvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(els.video, 0, 0, width, height);
+  return judgeFrame(frameStats(toGray(ctx.getImageData(0, 0, width, height).data), width, height));
 }
 
 // True once the camera is delivering frames.
@@ -285,6 +302,20 @@ async function describe({ auto = false } = {}) {
     return;
   }
 
+  const quality = frameQuality();
+  if (quality === "dark" || quality === "uniform") {
+    // Not worth asking the model: it would guess. Say why instead, at once.
+    const message = t(quality === "dark" ? "tooDark" : "uniformFrame");
+    setStatus(message, "error");
+    if (!auto) {
+      stopSpeech(false);
+      say(message);
+    }
+    return;
+  }
+  // While monitoring, a blurred frame is skipped; a sharper one will come along.
+  if (auto && quality === "blurry") return;
+
   state.busy = true;
   if (!auto) vibrate(40);  // confirms the tap was registered
   els.describe.setAttribute("aria-busy", "true");
@@ -297,7 +328,8 @@ async function describe({ auto = false } = {}) {
   let data = null;
   try {
     data = await postJson("/api/describe",
-      { image: captureFrame(), mode: state.mode, lang: state.lang, target, auto });
+      { image: captureFrame(), mode: state.mode, lang: state.lang, target, auto,
+        blurry: quality === "blurry" });
   } catch (err) {
     data = null;
   }

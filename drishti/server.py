@@ -56,6 +56,7 @@ class DescribeRequest(BaseModel):
     lang: Lang = "en"
     target: str = Field(default="", max_length=config.MAX_TARGET_CHARS)
     auto: bool = False  # true when the page sent the frame by itself, not on a key press
+    blurry: bool = False  # the page measured the frame as blurred (web/quality.js)
 
 
 class RenderRequest(BaseModel):
@@ -67,6 +68,7 @@ class RenderRequest(BaseModel):
     find_result: FindResult | None = None
     money: list[Money] = []
     fallback: bool = False
+    blurry: bool = False
 
 
 class SpeakRequest(BaseModel):
@@ -131,7 +133,7 @@ def describe(request: DescribeRequest):
 
     hazards, rest = build_speech(result.scene, request.mode, request.lang, request.target,
                                  result.find_result, fallback=result.status == "fallback",
-                                 money=result.money)
+                                 money=result.money, blurry=request.blurry)
     if request.auto:
         # Automatic frames only speak what has not been said recently.
         hazards, rest = repeats.fresh(hazards), repeats.fresh(rest)
@@ -144,7 +146,7 @@ def describe(request: DescribeRequest):
         speech=Speech(hazards=hazards, rest=rest),
         hazards=[c for c in hazard_cards(result.scene, request.lang) if c["sentence"] in hazards],
         objects=object_names(result.scene, request.lang), target=request.target.strip(),
-        retries=result.retries, inference_ms=result.inference_ms,
+        blurry=request.blurry, retries=result.retries, inference_ms=result.inference_ms,
         total_ms=round((time.perf_counter() - started) * 1000),
     )
 
@@ -154,7 +156,7 @@ def render(request: RenderRequest):
     """Word an existing scene again, for example after switching language. No model call."""
     hazards, rest = build_speech(request.scene, request.mode, request.lang, request.target,
                                  request.find_result, fallback=request.fallback,
-                                 money=request.money)
+                                 money=request.money, blurry=request.blurry)
     repeats.remember(hazards + rest)
     return DescribeResponse(
         request_id="", status="fallback" if request.fallback else "ok", mode=request.mode,
@@ -163,6 +165,7 @@ def render(request: RenderRequest):
         speech=Speech(hazards=hazards, rest=rest),
         hazards=hazard_cards(request.scene, request.lang),
         objects=object_names(request.scene, request.lang), target=request.target.strip(),
+        blurry=request.blurry,
     )
 
 

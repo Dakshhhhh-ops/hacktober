@@ -45,6 +45,10 @@ fully local reference pipeline to build on.
   never invented to fill a gap.
 - A speech layer that always says hazards first, nearest first, and only speaks objects
   or text in the mode that asks for them.
+- A picture check before anything is sent. If the frame is too dark or blank (a covered
+  lens, a wall), it says so at once instead of letting the model guess. If it is blurred,
+  it still describes, but says first that the picture is blurred. Done in the page, in
+  about a millisecond ([web/quality.js](web/quality.js)).
 - Optional auto-monitoring (experimental) that only calls the model when the picture has
   changed, and does not repeat the same warning within 20 seconds.
 - High-contrast page with large controls, visible focus, and states shown by text and
@@ -391,7 +395,7 @@ checklist.
 
 ```
 .venv\Scripts\python -m unittest discover -s tests -t .
-node --test tests/gate.test.mjs tests/voice.test.mjs
+node --test tests/gate.test.mjs tests/voice.test.mjs tests/quality.test.mjs
 ```
 
 The unit tests mock Ollama, the voice engine and the speech recogniser, so they need no model and play no audio.

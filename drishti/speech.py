@@ -31,6 +31,7 @@ PHRASES = {
         "nothing": "Nothing clear to report.",
         "fallback": "Rough description: {summary}",
         "no_money": "I cannot see any Indian money.",
+        "blurry": "The picture is blurred, so this may be wrong. Hold the camera still.",
         "money_one": "{value} rupee {kind}.",
         "money_many": "{count} {kind}s of {value} rupees.",
         "money_total": "Total {total} rupees.",
@@ -46,6 +47,7 @@ PHRASES = {
         "nothing": "कुछ साफ़ नहीं दिख रहा।",
         "fallback": "मोटा विवरण: {summary}",
         "no_money": "कोई भारतीय नोट या सिक्का नहीं दिख रहा।",
+        "blurry": "तस्वीर धुँधली है, इसलिए यह ग़लत हो सकता है। कैमरा स्थिर रखें।",
         "money_one": "{value} रुपये का {kind}।",
         "money_many": "{value} रुपये के {count} {kind}।",
         "money_total": "कुल {total} रुपये।",
@@ -112,7 +114,8 @@ def _short(summary: str) -> str:
 
 def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
                  find_result: FindResult | None = None, fallback: bool = False,
-                 money: list[Money] | None = None) -> tuple[list[str], list[str]]:
+                 money: list[Money] | None = None, blurry: bool = False,
+                 ) -> tuple[list[str], list[str]]:
     """Return (hazard sentences, other sentences). Hazards are nearest first.
 
     Objects and text are only spoken in the mode that asks for them. A fallback scene
@@ -146,6 +149,9 @@ def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
 
     if not hazards and not rest:
         rest = [phrases["nothing"]]
+    if blurry:
+        # After the warnings, before the rest: the person should know how far to trust it.
+        rest = [phrases["blurry"]] + rest
     return hazards, rest
 
 

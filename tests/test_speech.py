@@ -145,3 +145,15 @@ class MoneySpeechTests(unittest.TestCase):
     def test_no_money_says_so(self):
         _, rest = build_speech(EMPTY, "money", money=[])
         self.assertEqual(rest, ["I cannot see any Indian money."])
+
+
+class BlurNoteTests(unittest.TestCase):
+    def test_a_blurred_frame_says_so_after_the_warnings_and_before_the_rest(self):
+        hazards, rest = build_speech(SCENE, "surroundings", blurry=True)
+        self.assertEqual(hazards[0], "Careful: stairs ahead, near.")
+        self.assertEqual(rest[0], "The picture is blurred, so this may be wrong. Hold the camera still.")
+        self.assertEqual(rest[1], "A corridor with stairs going down.")
+
+    def test_hindi(self):
+        _, rest = build_speech(SCENE, "surroundings", "hi", blurry=True)
+        self.assertTrue(rest[0].startswith("तस्वीर धुँधली है"))

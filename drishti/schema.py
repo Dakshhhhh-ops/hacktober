@@ -96,6 +96,7 @@ class DescribeResponse(BaseModel):
     hazards: list[HazardCard] = []   # the warnings in speech.hazards, with their parts
     objects: list[str] = []          # names of things seen, in the output language
     target: str = ""
+    blurry: bool = False   # the page said the frame was blurred
     retries: int = 0
     inference_ms: int = 0  # time spent inside the vision model, all attempts
     total_ms: int = 0      # whole request on the server; excludes speech synthesis and playback

@@ -186,3 +186,13 @@ class MoneyEndpointTests(unittest.TestCase):
             scene=Scene.from_summary(""), mode="money", lang="hi",
             money=[{"value": 500, "kind": "note"}]))
         self.assertEqual(response.speech.rest, ["500 रुपये का नोट।"])
+
+
+class BlurryFrameTests(unittest.TestCase):
+    def test_the_page_can_mark_a_frame_as_blurred(self):
+        server.repeats = server.RepeatFilter(20)
+        with mock.patch.object(vlm, "describe", return_value=result()):
+            response = server.describe(server.DescribeRequest(image=JPEG, blurry=True))
+        self.assertTrue(response.blurry)
+        self.assertIn("blurred", response.speech.rest[0])
+        self.assertEqual(response.speech.hazards, ["Careful: stairs ahead, near."])
