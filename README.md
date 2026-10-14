@@ -239,6 +239,7 @@ voice on once (the **Voice commands** button, or **V**), then speak:
 | "find" | Asks "What are you looking for?" and waits for the object |
 | "money", "how much money", "which rupee note" | Money mode, then says the notes and coins |
 | "walk" | Walk mode on or off |
+| "stop walk mode" | Walk mode off |
 | "stop" | Stops the speech |
 | "repeat" | Says the last answer again |
 | "Hindi" / "English" | Switches language |
@@ -509,7 +510,14 @@ inspected.
 - **Latency.** Measured on the development laptop: about 1.5 to 3 s inside the model, then
   1 to 3 s to synthesise the speech on the CPU. The warning is synthesised first so it
   starts as early as possible, but this is far too slow for anything moving quickly.
-  The first request after starting is slower because the model has to load.
+  The first request after starting is slower because the model has to load. Walk mode and
+  live Find use a small detector instead and answer in 20 to 60 ms, and common warnings
+  are kept ready as audio, so they play at once.
+- **It shares the GPU.** If another program uses the GPU at the same time (another local
+  model, a game), Ollama has to reload this model for every request, and a description
+  took 25 to 60 s in testing. The app says "Still looking" after 5 s so the silence is not
+  mistaken for a crash, but it cannot make it faster. Walk mode and live Find run on the
+  CPU and are not affected.
 - **It needs a computer nearby.** The model runs on a laptop with a GPU; in phone mode the
   phone is only the camera, microphone and speaker, and must be on the same local network.
   Nobody carries a laptop to cross a room, so this is a prototype of the experience, not a
