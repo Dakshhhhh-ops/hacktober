@@ -274,12 +274,80 @@ Shortcuts are off while you are typing in the Find box.
 .venv\Scripts\python eval/run_eval.py
 ```
 
-The set is 30 fixed images: 21 openly licensed photographs from Wikimedia Commons and 9
-rendered text images. The label format, matching rules and metric definitions are in
-[eval/README.md](eval/README.md). Results from the last run:
+There are three image sets. The label format, matching rules and metric definitions are in
+[eval/README.md](eval/README.md).
+
+| Set | Images | What it is for |
+| --- | --- | --- |
+| Tuning (`eval/images`) | 30 | 21 Wikimedia Commons photos and 9 rendered text images. The prompts were written against these, so their numbers are optimistic. |
+| **Held-out** (`eval/heldout`) | 17 | New Commons photos from India that were never used for tuning: potholes, open drains, cattle and auto-rickshaws on the road, platforms, Hindi station boards, and 5 scenes with no hazard. **The fairer estimate.** |
+| Currency (`eval/currency`) | 18 | Indian notes and coins, for Money mode. |
 
 <!-- EVAL-RESULTS-START -->
-Model `qwen3-vl:2b-instruct`, 30 images, run 2026-10-11 16:58.
+### Results for the default model
+
+| `qwen3-vl:2b-instruct` | Tuning | **Held-out** | Currency |
+| --- | --- | --- | --- |
+| Hazards found (recall) | 93% (14 of 15) | **90% (9 of 10)** | |
+| **Missed hazards** | **1** | **1** | |
+| Clear scenes that still got a warning | 2 of 4 | 1 of 5 | |
+| False alarms per image | 0.17 | 0.20 | |
+| Text read correctly | 14 of 15 | 1 of 2 | |
+| Money: denominations exactly right | | | 17 of 18 |
+| **Money: said a value that is not there** | | | **1** |
+| Plain-text fallbacks (no validated JSON) | 0 | 0 | 0 |
+| Median / p95 model latency | 2.9 / 5.4 s | 4.0 / 8.7 s | 1.8 s |
+
+Missed: uneven paving (tuning) and potholes seen through a rainy bus window (held-out). The
+wrong money value was on a photo of a messy pile of ₹100 and ₹2000 notes, where it also said
+₹200 and ₹500. Full tables: [tuning](eval/results.md),
+[held-out](eval/compare/qwen3-vl-2b-instruct/heldout/results.md),
+[currency](eval/compare/qwen3-vl-2b-instruct/currency/results.md).
+
+### What the held-out set found
+
+On its first run the held-out set showed what the tuning set had hidden: hazard recall was
+**70%**, not 93%. Two of the three misses were not the model failing to see. On busy
+Indian streets it listed the hazards correctly (cows on both sides; a mud-filled trench),
+then got stuck copying shop-sign text ("KMC, KMC, KMC, ...") until it ran out of tokens.
+The JSON was invalid, so the app fell back to plain text, and a fallback never gives
+warnings. Money mode showed the same loop ("₹500", "₹500", ...).
+
+The fix was in the JSON schema sent to the model: every free-text field now has a length
+limit, and outside Read mode only four short lines of text are allowed (Money mode allows
+none). Held-out recall went from 70% to 90% with no fallbacks; on the street with cows the
+answer went from a 15 to 18 s fallback with no warning to a correct warning in about 3.5 s.
+
+### Other models
+
+The same code, prompts and images were run with two other models that fit a 6 GB GPU
+([full table](eval/compare/README.md)):
+
+| Held-out set | Hazards found | Clear scenes warned | Median latency |
+| --- | --- | --- | --- |
+| **`qwen3-vl:2b-instruct`** (default) | **90%** | 1 of 5 | 4.0 s |
+| `qwen3-vl:4b-instruct` | 10% | 0 of 5 | 3.1 s |
+| `gemma3:4b` | 50% | 1 of 5 | 30.8 s |
+
+Bigger is not automatically better. The 4B Qwen model reads text and money as well as the
+2B one but almost never reports a hazard: the prompt tells the model not to invent hazards,
+and the 4B model follows that too literally. Gemma 3 4B was ten times slower here. Each
+model would need its own prompt tuning; these two were measured before the length limits
+above were added.
+
+### How to read these numbers
+
+- **They are small samples.** 10 labelled hazards and 5 clear scenes in the held-out set
+  are enough to find failures like the one above, not to estimate a real-world rate.
+- The photographs were taken by sighted people, mostly in daylight, and are sharper than
+  what a phone held by a walking person will see.
+- Latency was measured on an RTX 4050 Laptop GPU (6 GB) with the model already loaded, on a
+  day the laptop was short of memory; an earlier run of the tuning set had a 1.5 s median.
+
+<details>
+<summary>Tuning set, full table, and how the first prompt was fixed</summary>
+
+Model `qwen3-vl:2b-instruct`, 30 images, run 2026-10-14 15:42.
 
 **Missed hazards (false negatives): 1 of 15 labelled hazards.**
 
@@ -290,44 +358,33 @@ Model `qwen3-vl:2b-instruct`, 30 images, run 2026-10-11 16:58.
 | Plain-text fallbacks (no validated JSON) | 0 |
 | Hazard recall | 93% (14 of 15) |
 | **Missed hazards** | **1** |
-| False alarms | 6 (0.33 per image) |
-| False-alarm rate (false alarms / all hazards the model reported) | 21% (6 of 29) |
-| Hazard-free images that still got a warning | 3 of 4 |
+| False alarms | 3 (0.17 per image) |
+| False-alarm rate (false alarms / all hazards the model reported) | 12% (3 of 26) |
+| Hazard-free images that still got a warning | 2 of 4 |
 | Text read correctly (similarity >= 80%) | 14 of 15 |
 | Mean text similarity | 0.975 |
-| Median model latency | 1499 ms |
-| p95 model latency | 2454 ms (33 inferences) |
+| Median model latency | 2948 ms |
+| p95 model latency | 5369 ms (33 inferences) |
 
 Missed hazards, by image:
 
 - `trip_hazard_pavement.jpg`: uneven pavement
 
-### What changed between the first run and this one
-
 The first real run used the prompt exactly as first written. The model repeated the
 example hazards from the system prompt ("stairs, open door, wet floor, moving people")
 on almost every image, including empty corridors. The fix was to make it list what it
 sees first, choose hazards only from that list, and to say that the examples are not a
-checklist. Both runs are real and both result files are in the repository.
+checklist.
 
-| | First run ([baseline](eval/baseline/results.md)) | Current |
+| | First run ([baseline](eval/baseline/results.md)) | After the prompt fix |
 | --- | --- | --- |
 | Hazards found | 9 of 15 | 14 of 15 |
 | **Missed hazards** | **6** | **1** |
 | False alarms | 31 | 6 |
 | Hazard-free images that still got a warning | 4 of 4 | 3 of 4 |
 | Plain-text fallbacks | 3 | 0 |
-| Text read correctly | 14 of 15 | 14 of 15 |
-| Median model latency | 2904 ms | 1499 ms |
 
-### How to read these numbers
-
-- **They are optimistic.** The prompt was tuned on these same 30 images, and there is no
-  separate held-out set. Expect worse on new scenes.
-- **False alarms are still common on clear scenes**: 3 of 4 hazard-free images got a warning
-  (a door, a floor, an exit sign). Four images is far too few to estimate a rate.
-- The photographs were chosen because they show a hazard clearly, in daylight.
-- Latency was measured on an RTX 4050 Laptop GPU (6 GB) with the model already loaded.
+</details>
 <!-- EVAL-RESULTS-END -->
 
 ## 15. Tests
@@ -377,9 +434,12 @@ inspected.
 ## 18. Known limitations
 
 <!-- LIMITATIONS-MEASURED -->
-- **It can invent or miss things.** A 2-billion-parameter model hallucinates. In the
-  evaluation it still warned on most hazard-free scenes and missed uneven paving. See
-  section 14.
+- **It can invent or miss things.** A 2-billion-parameter model hallucinates. On photos
+  it was never tuned on it found 9 of 10 hazards, missed potholes seen through a rainy
+  window, and warned on 1 of 5 clear scenes. See section 14.
+- **Money mode can be wrong.** It got 17 of 18 test images right, but on a messy pile of
+  notes it named values that were not there. Count important amounts another way too.
+  It does not check whether a note is genuine.
 - **Latency.** Measured on the development laptop: about 1.5 to 3 s inside the model, then
   1 to 3 s to synthesise the speech on the CPU. The warning is synthesised first so it
   starts as early as possible, but this is far too slow for anything moving quickly.

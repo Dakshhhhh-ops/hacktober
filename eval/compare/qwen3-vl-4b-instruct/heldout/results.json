@@ -1,0 +1,441 @@
+{
+  "model": "qwen3-vl:4b-instruct",
+  "summary": {
+    "images": 17,
+    "images_scored_for_hazards": 15,
+    "failed_inferences": 0,
+    "fallbacks": 0,
+    "hazards_labelled": 10,
+    "hazards_detected": 1,
+    "hazards_missed": 9,
+    "hazard_recall": 0.1,
+    "hazards_predicted": 1,
+    "false_alarms": 0,
+    "false_alarms_per_image": 0.0,
+    "false_alarm_rate": 0.0,
+    "hazard_free_images": 5,
+    "hazard_free_images_with_alarm": 0,
+    "text_images": 2,
+    "text_mean_similarity": 0.81,
+    "text_read_correctly": 1,
+    "money_images": 0,
+    "money_correct": 0,
+    "money_wrong_value": 0,
+    "money_nothing_seen": 0,
+    "inferences_timed": 17,
+    "latency_median_ms": 3098,
+    "latency_p95_ms": 4675
+  },
+  "images": [
+    {
+      "image": "broken_road_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "hole"
+      ],
+      "hazards_optional": [
+        "debris"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "hole"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2952
+      ],
+      "status": "ok",
+      "summary": "Open manhole and debris ahead, broken concrete nearby."
+    },
+    {
+      "image": "potholed_road_kolkata.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "pothole"
+      ],
+      "hazards_optional": [
+        "pothole",
+        "motorcycle",
+        "bollard",
+        "person"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "pothole"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        4675
+      ],
+      "status": "ok",
+      "summary": "Wet pavement, parked motorcycle, pedestrians, and signs ahead."
+    },
+    {
+      "image": "potholes_bihar.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "puddle"
+      ],
+      "hazards_optional": [
+        "puddle",
+        "pole",
+        "person",
+        "mound"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "puddle"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3709
+      ],
+      "status": "ok",
+      "summary": "Palm tree, water tank, person, dirt road, and dirt pile visible ahead and to sides."
+    },
+    {
+      "image": "cow_street_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "cow"
+      ],
+      "hazards_optional": [
+        "person",
+        "motorcycle",
+        "stick"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "cow"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3587
+      ],
+      "status": "ok",
+      "summary": "Man and cow walking ahead; car and motorcycle nearby; fence ahead."
+    },
+    {
+      "image": "cow_street_madurai.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "cow"
+      ],
+      "hazards_optional": [
+        "motorcycle"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "cow"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3230
+      ],
+      "status": "ok",
+      "summary": "Cow and people ahead on street; no immediate hazards."
+    },
+    {
+      "image": "cows_road_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "cow"
+      ],
+      "hazards_optional": [
+        "cow",
+        "cow",
+        "car",
+        "person",
+        "pole"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "cow"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        4390
+      ],
+      "status": "ok",
+      "summary": "Cows and a car are near the path; man is to the right."
+    },
+    {
+      "image": "autos_ahmedabad.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "auto rickshaw"
+      ],
+      "hazards_optional": [
+        "auto rickshaw",
+        "motorcycle",
+        "manhole",
+        "person"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "auto rickshaw"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3215
+      ],
+      "status": "ok",
+      "summary": "Auto-rickshaws and buildings ahead, motorcycle to right."
+    },
+    {
+      "image": "manhole_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "open drain"
+      ],
+      "hazards_optional": [
+        "trash"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "open drain"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3086
+      ],
+      "status": "ok",
+      "summary": "Trash pile below, road left, sidewalk right."
+    },
+    {
+      "image": "drain_unbuilt.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "trench"
+      ],
+      "hazards_optional": [
+        "plank",
+        "person",
+        "motorcycle",
+        "water"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "mud"
+      ],
+      "detected": [
+        "trench"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        4274
+      ],
+      "status": "ok",
+      "summary": "Deep mud and wooden plank ahead; motorcycles and shops nearby."
+    },
+    {
+      "image": "platform_kanpur.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "platform edge",
+        "pillar"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2967
+      ],
+      "status": "ok",
+      "summary": "Train, bench, and pole visible ahead and to right; floor appears wet."
+    },
+    {
+      "image": "platform_new_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "railway track"
+      ],
+      "hazards_optional": [
+        "sack",
+        "track"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [
+        "railway track"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2731
+      ],
+      "status": "ok",
+      "summary": "Rail tracks ahead, platform to left, bag below."
+    },
+    {
+      "image": "empty_road_1.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "road"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3043
+      ],
+      "status": "ok",
+      "summary": "Road ahead, trees on both sides, sign on left."
+    },
+    {
+      "image": "empty_road_trees.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "tree"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2687
+      ],
+      "status": "ok",
+      "summary": "Road flanked by trees ahead, no immediate hazards."
+    },
+    {
+      "image": "living_room_kolkata.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "table",
+        "table"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3438
+      ],
+      "status": "ok",
+      "summary": "Room has furniture, doors, and no immediate hazards."
+    },
+    {
+      "image": "gandhi_room.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "railing"
+      ],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3050
+      ],
+      "status": "ok",
+      "summary": "Railing and door ahead, poster to right. No immediate hazards."
+    },
+    {
+      "image": "station_board_hapur.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "हापुड़ जंक्शन HAPUR JN.",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2673
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "हापुड़ जंक्शन",
+        "HAPUR JN.",
+        "H.T. FROM M.S.L. 213.810"
+      ],
+      "text_similarity": 0.646
+    },
+    {
+      "image": "station_board_chandi_mandir.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "चण्डी मन्दिर CHANDI MANDIR समुद्र-तल से ऊँचाई 353.83 मी. HEIGHT ABOVE MSL 353.83 Mtr.",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3098
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "चण्डी मन्दिर",
+        "CHANDI MANDIR",
+        "शमुन्द्र-तल से ऊँचाई- 353.83 मी.",
+        "HEIGHT ABOVE MSL 353.83 Mtr."
+      ],
+      "text_similarity": 0.975
+    }
+  ]
+}

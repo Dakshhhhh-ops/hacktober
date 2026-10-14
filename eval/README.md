@@ -12,6 +12,19 @@ pipeline the app uses, then writes:
 
 Ollama must be running with the configured model. Nothing here is mocked.
 
+## The three image sets
+
+| Set | Run it with |
+| --- | --- |
+| Tuning, 30 images | `python eval/run_eval.py` |
+| Held-out, 17 images | `python eval/run_eval.py --images eval/heldout/images --labels eval/heldout/labels.csv --out eval/heldout` |
+| Currency, 18 images | `python eval/run_eval.py --images eval/currency/images --labels eval/currency/labels.csv --out eval/currency` |
+
+The held-out photos were chosen and labelled after the prompts were written, and must not
+be used to tune them: once a prompt is changed because of a held-out image, that image
+belongs in the tuning set. To compare models, set `OLLAMA_MODEL`, write each run to
+`eval/compare/<model>/<set>/`, then run `python eval/compare_models.py`.
+
 ## Label format
 
 `labels.csv` has three columns. The labels were written by inspecting each image before
@@ -69,6 +82,12 @@ hazard in that image counts as missed.
 **Text.** For images with `text_true`, the image is run again in Read mode. Both strings
 are lowercased, punctuation is removed and spaces are collapsed; similarity is the
 `SequenceMatcher` ratio. A similarity of 0.80 or more counts as read correctly.
+
+**Money.** For images with a `money_true` column (for example `100;2000`), the image is run
+in Money mode. It is right when the set of values the model named is exactly the set in
+the label; how many notes of each value is not scored. Naming a value that is not in the
+image is counted on its own line, because telling someone they hold ₹500 when it is ₹50
+is the dangerous mistake.
 
 **Latency.** Time spent inside the vision model per request, in milliseconds, including a
 retry if one happened. The median and the 95th percentile (nearest rank) are reported.

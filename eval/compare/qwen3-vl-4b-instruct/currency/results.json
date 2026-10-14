@@ -1,0 +1,484 @@
+{
+  "model": "qwen3-vl:4b-instruct",
+  "summary": {
+    "images": 18,
+    "images_scored_for_hazards": 0,
+    "failed_inferences": 0,
+    "fallbacks": 0,
+    "hazards_labelled": 0,
+    "hazards_detected": 0,
+    "hazards_missed": 0,
+    "hazard_recall": null,
+    "hazards_predicted": 0,
+    "false_alarms": 0,
+    "false_alarms_per_image": null,
+    "false_alarm_rate": null,
+    "hazard_free_images": 0,
+    "hazard_free_images_with_alarm": 0,
+    "text_images": 0,
+    "text_mean_similarity": null,
+    "text_read_correctly": 0,
+    "money_images": 18,
+    "money_correct": 17,
+    "money_wrong_value": 1,
+    "money_nothing_seen": 0,
+    "inferences_timed": 18,
+    "latency_median_ms": 5908,
+    "latency_p95_ms": 11073
+  },
+  "images": [
+    {
+      "image": "note_10_front.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        11073
+      ],
+      "status": "ok",
+      "money_true": [
+        10
+      ],
+      "money_predicted": [
+        10
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_10_back.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2539
+      ],
+      "status": "ok",
+      "money_true": [
+        10
+      ],
+      "money_predicted": [
+        10
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_20_front.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        4576
+      ],
+      "status": "ok",
+      "money_true": [
+        20
+      ],
+      "money_predicted": [
+        20
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_20_back.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        5873
+      ],
+      "status": "ok",
+      "money_true": [
+        20
+      ],
+      "money_predicted": [
+        20
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_50_back_old.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3163
+      ],
+      "status": "ok",
+      "money_true": [
+        50
+      ],
+      "money_predicted": [
+        50
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_100_front.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2688
+      ],
+      "status": "ok",
+      "money_true": [
+        100
+      ],
+      "money_predicted": [
+        100
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_100_back.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2755
+      ],
+      "status": "ok",
+      "money_true": [
+        100
+      ],
+      "money_predicted": [
+        100
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_100_photo.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2672
+      ],
+      "status": "ok",
+      "money_true": [
+        100
+      ],
+      "money_predicted": [
+        100
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_200_front.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        5944
+      ],
+      "status": "ok",
+      "money_true": [
+        200
+      ],
+      "money_predicted": [
+        200
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_200_back.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        6325
+      ],
+      "status": "ok",
+      "money_true": [
+        200
+      ],
+      "money_predicted": [
+        200
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_200_photo.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        6161
+      ],
+      "status": "ok",
+      "money_true": [
+        200
+      ],
+      "money_predicted": [
+        200
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_200_photo_back.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        6082
+      ],
+      "status": "ok",
+      "money_true": [
+        200
+      ],
+      "money_predicted": [
+        200
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_200_photo_2.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        6361
+      ],
+      "status": "ok",
+      "money_true": [
+        200
+      ],
+      "money_predicted": [
+        200
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_500_front.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        6369
+      ],
+      "status": "ok",
+      "money_true": [
+        500
+      ],
+      "money_predicted": [
+        500
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "note_500_back.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        6279
+      ],
+      "status": "ok",
+      "money_true": [
+        500
+      ],
+      "money_predicted": [
+        500
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "notes_100_2000.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        9959
+      ],
+      "status": "ok",
+      "money_true": [
+        100,
+        2000
+      ],
+      "money_predicted": [
+        100,
+        200,
+        2000
+      ],
+      "money_correct": false,
+      "money_wrong_value": true
+    },
+    {
+      "image": "coin_20.png",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3143
+      ],
+      "status": "ok",
+      "money_true": [
+        20
+      ],
+      "money_predicted": [
+        20
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    },
+    {
+      "image": "coin_1.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2873
+      ],
+      "status": "ok",
+      "money_true": [
+        1
+      ],
+      "money_predicted": [
+        1
+      ],
+      "money_correct": true,
+      "money_wrong_value": false
+    }
+  ]
+}

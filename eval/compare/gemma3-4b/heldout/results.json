@@ -1,0 +1,473 @@
+{
+  "model": "gemma3:4b",
+  "summary": {
+    "images": 17,
+    "images_scored_for_hazards": 15,
+    "failed_inferences": 0,
+    "fallbacks": 0,
+    "hazards_labelled": 10,
+    "hazards_detected": 5,
+    "hazards_missed": 5,
+    "hazard_recall": 0.5,
+    "hazards_predicted": 17,
+    "false_alarms": 1,
+    "false_alarms_per_image": 0.07,
+    "false_alarm_rate": 0.059,
+    "hazard_free_images": 5,
+    "hazard_free_images_with_alarm": 1,
+    "text_images": 2,
+    "text_mean_similarity": 0.839,
+    "text_read_correctly": 1,
+    "money_images": 0,
+    "money_correct": 0,
+    "money_wrong_value": 0,
+    "money_nothing_seen": 0,
+    "inferences_timed": 17,
+    "latency_median_ms": 30796,
+    "latency_p95_ms": 32134
+  },
+  "images": [
+    {
+      "image": "broken_road_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "hole"
+      ],
+      "hazards_optional": [
+        "debris"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "hole"
+      ],
+      "detected": [
+        "hole"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        26390
+      ],
+      "status": "ok",
+      "summary": "A large hole with debris and a metal frame is visible ahead."
+    },
+    {
+      "image": "potholed_road_kolkata.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "pothole"
+      ],
+      "hazards_optional": [
+        "pothole",
+        "motorcycle",
+        "bollard",
+        "person"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "orange barrier",
+        "motorcycle"
+      ],
+      "detected": [],
+      "missed": [
+        "pothole"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        29682
+      ],
+      "status": "ok",
+      "summary": "Several obstacles and people are present in the immediate surroundings."
+    },
+    {
+      "image": "potholes_bihar.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "puddle"
+      ],
+      "hazards_optional": [
+        "puddle",
+        "pole",
+        "person",
+        "mound"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "dirt road"
+      ],
+      "detected": [],
+      "missed": [
+        "puddle"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        29099
+      ],
+      "status": "ok",
+      "summary": "A dirt road leads ahead with a water tower and a person nearby."
+    },
+    {
+      "image": "cow_street_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "cow"
+      ],
+      "hazards_optional": [
+        "person",
+        "motorcycle",
+        "stick"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "vehicle"
+      ],
+      "detected": [],
+      "missed": [
+        "cow"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        30288
+      ],
+      "status": "ok",
+      "summary": "A man walks with a cow near vehicles and a motorcycle."
+    },
+    {
+      "image": "cow_street_madurai.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "cow"
+      ],
+      "hazards_optional": [
+        "motorcycle"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "motorcycle"
+      ],
+      "detected": [],
+      "missed": [
+        "cow"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        30404
+      ],
+      "status": "ok",
+      "summary": "A cow and people are present on a street with vehicles."
+    },
+    {
+      "image": "cows_road_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "cow"
+      ],
+      "hazards_optional": [
+        "cow",
+        "cow",
+        "car",
+        "person",
+        "pole"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "vehicle",
+        "cow"
+      ],
+      "detected": [
+        "cow"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        30677
+      ],
+      "status": "ok",
+      "summary": "Several cows and a car are present in the scene ahead."
+    },
+    {
+      "image": "autos_ahmedabad.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "auto rickshaw"
+      ],
+      "hazards_optional": [
+        "auto rickshaw",
+        "motorcycle",
+        "manhole",
+        "person"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "auto rickshaws"
+      ],
+      "detected": [
+        "auto rickshaw"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        29995
+      ],
+      "status": "ok",
+      "summary": "Several auto rickshaws are visible in the street ahead."
+    },
+    {
+      "image": "manhole_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "open drain"
+      ],
+      "hazards_optional": [
+        "trash"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "open drain"
+      ],
+      "detected": [
+        "open drain"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        30871
+      ],
+      "status": "ok",
+      "summary": "A large open drain is ahead on the sidewalk."
+    },
+    {
+      "image": "drain_unbuilt.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "trench"
+      ],
+      "hazards_optional": [
+        "plank",
+        "person",
+        "motorcycle",
+        "water"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "wooden bridge"
+      ],
+      "detected": [],
+      "missed": [
+        "trench"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        30796
+      ],
+      "status": "ok",
+      "summary": "A wooden bridge spans a deep hole in the street ahead."
+    },
+    {
+      "image": "platform_kanpur.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "platform edge",
+        "pillar"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "bench"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        31770
+      ],
+      "status": "ok",
+      "summary": "I see a train car and people on a platform ahead."
+    },
+    {
+      "image": "platform_new_delhi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "railway track"
+      ],
+      "hazards_optional": [
+        "sack",
+        "track"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "rail tracks"
+      ],
+      "detected": [
+        "railway track"
+      ],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        30198
+      ],
+      "status": "ok",
+      "summary": "Tracks and people are visible ahead of the camera."
+    },
+    {
+      "image": "empty_road_1.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "road"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "trees"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        31164
+      ],
+      "status": "ok",
+      "summary": "Road ahead with trees and a distant sign."
+    },
+    {
+      "image": "empty_road_trees.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "tree"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "road"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        31584
+      ],
+      "status": "ok",
+      "summary": "A road stretches ahead between trees and grass."
+    },
+    {
+      "image": "living_room_kolkata.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "table",
+        "table"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "wooden bench"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        31913
+      ],
+      "status": "ok",
+      "summary": "Several wooden furniture pieces and a wall icon are visible in the room."
+    },
+    {
+      "image": "gandhi_room.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "railing"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "wooden bench"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [
+        "wooden bench"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        32134
+      ],
+      "status": "ok",
+      "summary": "A room with a bench, wheel, and ceiling beams."
+    },
+    {
+      "image": "station_board_hapur.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "हापुड़ जंक्शन HAPUR JN.",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        31311
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "हपोर जंक्शन",
+        "Hapur JN.",
+        "M.S.I. 215301"
+      ],
+      "text_similarity": 0.704
+    },
+    {
+      "image": "station_board_chandi_mandir.jpg",
+      "hazards_scored": false,
+      "hazards_true": [],
+      "hazards_optional": [],
+      "text_true": "चण्डी मन्दिर CHANDI MANDIR समुद्र-तल से ऊँचाई 353.83 मी. HEIGHT ABOVE MSL 353.83 Mtr.",
+      "hazards_predicted": [],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        31309
+      ],
+      "status": "ok",
+      "text_predicted": [
+        "चण्डी मंदिर",
+        "CHANDI MANDIR",
+        "समुद्र-तल से ऊँचाई-353.83 मी.",
+        "HEIGHT HT ABOVE MSL 353.83 Mtr."
+      ],
+      "text_similarity": 0.975
+    }
+  ]
+}
