@@ -202,6 +202,11 @@ near." It warns about anything near, and about things at mid distance straight a
 does not repeat the same warning within 6 seconds. Warnings are synthesised when the
 server starts and kept, so they play at once, with no synthesis at all.
 
+On the evaluation photos (`python eval/walk_eval.py`) it warned about all 5 labelled
+people, vehicles and animals (the bicycle on a pavement, cows on three Indian streets,
+auto-rickshaws in Ahmedabad) and about none of the 9 clear scenes, in a median of 14 ms.
+Five objects is a very small sample: it shows the idea works, not how often it fails.
+
 What it can and cannot do:
 
 - It knows people, bicycles, motorbikes, vehicles and animals. It says "vehicle" and

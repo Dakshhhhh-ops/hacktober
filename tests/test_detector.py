@@ -191,3 +191,13 @@ class LocateEndpointTests(unittest.TestCase):
 
     def test_unknown_objects_are_left_to_the_vision_model(self):
         self.assertEqual(self.call("keys", []), {"known": False, "found": False})
+
+
+class WordMatchTests(unittest.TestCase):
+    def test_whole_words_and_plurals_only(self):
+        self.assertTrue(detector._mentions("two men", "person"))
+        self.assertTrue(detector._mentions("stray cows", "animal"))
+        self.assertTrue(detector._mentions("auto-rickshaws", "vehicle"))
+        self.assertFalse(detector._mentions("open manhole", "person"))   # not a man
+        self.assertFalse(detector._mentions("carpet", "vehicle"))        # not a car
+        self.assertFalse(detector._mentions("bicycle", "motorcycle"))

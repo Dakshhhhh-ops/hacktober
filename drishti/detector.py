@@ -262,8 +262,9 @@ def walk_warnings(detections: list[Detection]) -> list[Hazard]:
 
 
 def _mentions(phrase: str, name: str) -> bool:
-    words = phrase.lower().replace("-", " ").split()
-    return any(w.startswith(s) for w in words for s in SAME_THING[name])
+    """Whole words, with a plural: "man" and "cows" count, "manhole" is not a man."""
+    words = phrase.lower().replace("-", " ").replace(",", " ").split()
+    return any(w in (s, s + "s", s + "es") for w in words for s in SAME_THING[name])
 
 
 def missing_from(model_hazards: list[Hazard], detected: list[Hazard]) -> list[Hazard]:
