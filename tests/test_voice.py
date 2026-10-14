@@ -138,3 +138,10 @@ class MoneyCommandTests(unittest.TestCase):
     def test_hindi(self):
         self.assertEqual(voice.parse("कितने पैसे हैं", "hi")["command"], "money")
         self.assertEqual(voice.parse("यह कौन सा नोट है", "hi")["command"], "money")
+
+
+class WalkCommandTests(unittest.TestCase):
+    def test_english_and_hindi(self):
+        self.assertEqual(voice.parse("walk"), {"command": "walk", "target": ""})
+        self.assertEqual(voice.parse("walk mode please")["command"], "walk")
+        self.assertEqual(voice.parse("चलो", "hi")["command"], "walk")

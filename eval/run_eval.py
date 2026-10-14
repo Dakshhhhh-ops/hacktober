@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from drishti import config, vlm  # noqa: E402
+from drishti import config, detector, vlm  # noqa: E402
 
 HAZARD_MATCH_RATIO = 0.75   # fuzzy threshold for a predicted hazard to match a label
 TEXT_CORRECT_RATIO = 0.80   # similarity at or above this counts as "read correctly"
@@ -90,8 +90,12 @@ def percentile(values: list[float], p: float) -> float:
     return ordered[min(rank, len(ordered)) - 1]
 
 
-def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[dict]:
-    """Run the pipeline on every labelled image. One result dict per image."""
+def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe, detect=None) -> list[dict]:
+    """Run the pipeline on every labelled image. One result dict per image.
+
+    With `detect` (detector.detect), Surroundings answers also get the detector's hazards
+    that the model did not mention, as the app does.
+    """
     results = []
     for row in rows:
         name = row["image"].strip()
@@ -112,13 +116,19 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[
         if not path.exists():
             item.update(failed=True, error="image file not found")
             continue
-        image_b64 = base64.b64encode(path.read_bytes()).decode()
+        image_bytes = path.read_bytes()
+        image_b64 = base64.b64encode(image_bytes).decode()
         try:
             if score_hazards:
                 scene = describe(image_b64, "surroundings", "en")
                 item["latencies_ms"].append(scene.inference_ms)
                 item["status"] = scene.status
                 item["hazards_predicted"] = [h.what for h in scene.scene.hazards]
+                if detect is not None:
+                    added = detector.missing_from(scene.scene.hazards,
+                                                  detector.hazards(detect(image_bytes)))
+                    item["detector_added"] = [h.what for h in added]
+                    item["hazards_predicted"] += item["detector_added"]
                 item["summary"] = scene.scene.summary
                 detected, missed, false_alarms = match_hazards(labels, item["hazards_predicted"])
                 item.update(detected=detected, missed=missed, false_alarms=false_alarms)
@@ -141,7 +151,8 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[
             item.update(failed=True, error=str(err))
         print(f"  {name}: " + ("FAILED " + item["error"] if item["failed"] else
               f"missed={item['missed']} false_alarms={item['false_alarms']} "
-              f"text_similarity={item.get('text_similarity', 'n/a')}"
+              + (f"detector_added={item['detector_added']} " if "detector_added" in item else "")
+              + f"text_similarity={item.get('text_similarity', 'n/a')}"
               + (f" money={item['money_predicted']} (true {item['money_true']})"
                  if "money_true" in item else "")))
     return results
@@ -235,6 +246,8 @@ def main() -> None:
     parser.add_argument("--images", type=Path, default=ROOT / "eval" / "images")
     parser.add_argument("--labels", type=Path, default=ROOT / "eval" / "labels.csv")
     parser.add_argument("--out", type=Path, default=ROOT / "eval")
+    parser.add_argument("--detector", action="store_true",
+                        help="add the object detector's hazards, as the app does")
     args = parser.parse_args()
 
     with args.labels.open(newline="", encoding="utf-8-sig") as f:
@@ -246,7 +259,9 @@ def main() -> None:
         sys.exit(f"{message} {fix}")
 
     print(f"Evaluating {len(rows)} images with {config.MODEL} ...")
-    results = evaluate(rows, args.images)
+    if args.detector and not detector.available():
+        sys.exit(f"The object detector is not installed: {config.DETECTOR_MODEL}")
+    results = evaluate(rows, args.images, detect=detector.detect if args.detector else None)
     summary = summarise(results)
     (args.out / "results.json").write_text(
         json.dumps({"model": config.MODEL, "summary": summary, "images": results}, indent=2,

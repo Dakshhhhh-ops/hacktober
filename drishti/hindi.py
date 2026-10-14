@@ -33,6 +33,7 @@ GLOSSARY = {
     "car": "गाड़ी", "vehicle": "गाड़ी", "suv": "गाड़ी", "bus": "बस", "truck": "ट्रक",
     "auto": "ऑटो", "people": "लोग", "person": "व्यक्ति", "pedestrian": "व्यक्ति",
     "man": "आदमी", "woman": "महिला", "child": "बच्चा", "dog": "कुत्ता", "cow": "गाय",
+    "animal": "जानवर",
     # everyday objects
     "bottle": "बोतल", "cup": "कप", "phone": "फ़ोन", "laptop": "लैपटॉप", "key": "चाबी",
     "book": "किताब", "window": "खिड़की", "floor": "फ़र्श", "road": "सड़क", "lamp": "बत्ती",

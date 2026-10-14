@@ -6,11 +6,19 @@ back to the browser's built-in voice.
 import io
 import shutil
 import subprocess
+import threading
 import wave
+from collections import OrderedDict
 
 from . import config
 
 _piper_voices = {}
+# Short sentences are spoken again and again ("Careful: vehicle ahead, near."), so their
+# audio is kept. Synthesis takes up to a few seconds on the CPU; a cached clip is instant.
+_cache: OrderedDict[tuple[str, str], bytes] = OrderedDict()
+_cache_lock = threading.Lock()
+CACHE_SIZE = 300
+CACHE_MAX_CHARS = 120
 
 
 def _piper_voice(lang: str):
@@ -38,6 +46,21 @@ def engine(lang: str = "en") -> str | None:
 
 
 def synthesize(text: str, lang: str = "en") -> bytes | None:
+    key = (text.strip(), lang)
+    with _cache_lock:
+        if key in _cache:
+            _cache.move_to_end(key)
+            return _cache[key]
+    audio = _synthesize(text, lang)
+    if audio is not None and len(key[0]) <= CACHE_MAX_CHARS:
+        with _cache_lock:
+            _cache[key] = audio
+            while len(_cache) > CACHE_SIZE:
+                _cache.popitem(last=False)
+    return audio
+
+
+def _synthesize(text: str, lang: str) -> bytes | None:
     voice = _piper_voice(lang)
     if voice is not None:
         buffer = io.BytesIO()

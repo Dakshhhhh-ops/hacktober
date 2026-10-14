@@ -13,6 +13,11 @@ const TEXT = {
     moneyHint: "Says which rupee notes or coins it sees",
     findLabel: "What are you looking for?", describe: "Describe now", stop: "Stop speech",
     auto: "Auto-monitor", volume: "Volume", warning: "Warning", live: "Live",
+    walk: "Walk mode",
+    walkOn: "Walk mode on. I will warn about people, vehicles and animals close to you.",
+    walkOff: "Walk mode off.",
+    walkUnavailable: "Walk mode needs the object detector, which is not installed.",
+    walkNote: "Walk mode checks a few times a second for people, vehicles and animals. It cannot see steps, holes or open drains: keep using your cane.",
     seen: "Also seen", textRead: "Text read", findAnswer: "Search result", scene: "Scene",
     moneyAnswer: "Money seen",
     raw: "Model output (JSON)", languageHint: "switches language",
@@ -36,7 +41,7 @@ const TEXT = {
     modelTime: "model", roundTrip: "round trip", retries: "retries",
     tapHint: "Tap the picture to describe",
     voice: "Voice commands", heard: "Heard:", listening: "Listening…",
-    voiceOn: "Voice commands on. Say describe, read, find, money, or stop.",
+    voiceOn: "Voice commands on. Say describe, read, find, money, walk, or stop.",
     voiceOff: "Voice commands off.", askTarget: "What are you looking for?",
     notUnderstood: "Sorry, I did not catch that.",
     noMic: "No microphone. Allow microphone access in the browser and try again.",
@@ -53,6 +58,11 @@ const TEXT = {
     moneyHint: "बताता है कि कौन-से नोट या सिक्के हैं",
     findLabel: "आप क्या खोज रहे हैं?", describe: "अभी बताओ", stop: "आवाज़ रोको",
     auto: "ऑटो-निगरानी", volume: "आवाज़", warning: "चेतावनी", live: "लाइव",
+    walk: "चलने का मोड",
+    walkOn: "चलने का मोड चालू। पास आने वाले लोगों, गाड़ियों और जानवरों के बारे में बताऊँगा।",
+    walkOff: "चलने का मोड बंद।",
+    walkUnavailable: "चलने के मोड के लिए ऑब्जेक्ट डिटेक्टर चाहिए, जो इंस्टॉल नहीं है।",
+    walkNote: "चलने का मोड हर सेकंड कुछ बार लोगों, गाड़ियों और जानवरों को देखता है। यह सीढ़ियाँ, गड्ढे या खुली नालियाँ नहीं देख सकता: छड़ी का इस्तेमाल करते रहें।",
     seen: "यह भी दिखा", textRead: "पढ़ा गया पाठ", findAnswer: "खोज का नतीजा", scene: "दृश्य",
     moneyAnswer: "दिखे हुए पैसे",
     raw: "मॉडल का उत्तर (JSON)", languageHint: "से भाषा बदलती है",
@@ -76,7 +86,7 @@ const TEXT = {
     modelTime: "मॉडल", roundTrip: "कुल समय", retries: "दोबारा कोशिश",
     tapHint: "बताने के लिए तस्वीर पर टैप करें",
     voice: "आवाज़ से चलाएँ", heard: "सुना:", listening: "सुन रहा हूँ…",
-    voiceOn: "आवाज़ से चलाना चालू। बोलें: बताओ, पढ़ो, बोतल कहां है, कितने पैसे, या बस।",
+    voiceOn: "आवाज़ से चलाना चालू। बोलें: बताओ, पढ़ो, बोतल कहां है, कितने पैसे, चलो, या बस।",
     voiceOff: "आवाज़ से चलाना बंद।", askTarget: "आप क्या खोज रहे हैं?",
     notUnderstood: "माफ़ कीजिए, समझ नहीं आया।",
     noMic: "माइक्रोफ़ोन नहीं मिला। ब्राउज़र में माइक्रोफ़ोन की अनुमति दें और फिर कोशिश करें।",
@@ -93,6 +103,7 @@ const els = {
   modelState: $("model-state"),
   modeBadge: $("mode-badge"), findRow: $("find-row"), target: $("target"),
   describe: $("describe"), stop: $("stop"), auto: $("auto"), volume: $("volume"),
+  walk: $("walk"), walkNote: $("walk-note"),
   status: $("status"), hazards: $("hazards"), hazardList: $("hazard-list"),
   fallbackNote: $("fallback-note"), spokenLabel: $("spoken-label"), spoken: $("spoken"),
   objectsRow: $("objects-row"), objects: $("objects"), meta: $("meta"), raw: $("raw"),
@@ -105,6 +116,8 @@ const state = {
   mode: "surroundings",
   lang: "en",
   auto: false,
+  walk: false,          // walk mode: fast object-detector warnings
+  walkBusy: false,      // a walk-mode check is in flight
   busy: false,          // a describe request is in flight
   speaking: false,
   queuedManual: false,  // Space was pressed while a request was in flight
@@ -539,6 +552,8 @@ function runCommand({ command, target }) {
   } else if (command === "money") {
     setMode("money", { focus: false });
     describe();
+  } else if (command === "walk") {
+    toggleWalk();
   } else if (command === "find" || (state.awaitingTarget && target)) {
     setMode("find", { focus: false });
     if (!target) {
@@ -588,6 +603,56 @@ async function toggleVoice() {
   say(t("voiceOn"));
 }
 
+// ---- Walk mode ----------------------------------------------------------------
+// A few times a second the object detector (not the slow vision-language model) looks for
+// people, vehicles and animals that are close or straight ahead. New warnings interrupt
+// whatever is being said; the same warning is not repeated for a few seconds.
+
+const walkCanvas = document.createElement("canvas");
+
+function walkFrame() {
+  const scale = Math.min(1, 416 / Math.max(els.video.videoWidth, els.video.videoHeight));
+  walkCanvas.width = Math.round(els.video.videoWidth * scale);
+  walkCanvas.height = Math.round(els.video.videoHeight * scale);
+  walkCanvas.getContext("2d").drawImage(els.video, 0, 0, walkCanvas.width, walkCanvas.height);
+  return walkCanvas.toDataURL("image/jpeg", 0.7);
+}
+
+function toggleWalk() {
+  if (!state.walk && state.health && !state.health.detector) {
+    setStatus(t("walkUnavailable"), "error");
+    say(t("walkUnavailable"));
+    return;
+  }
+  state.walk = !state.walk;
+  els.walk.setAttribute("aria-pressed", String(state.walk));
+  els.walkNote.hidden = !state.walk;
+  const message = t(state.walk ? "walkOn" : "walkOff");
+  setStatus(message, "idle");
+  stopSpeech(false);
+  say(message);
+}
+
+async function walkTick() {
+  if (!state.walk || state.walkBusy || !cameraReady() || document.hidden) return;
+  const quality = frameQuality();
+  if (quality === "dark" || quality === "uniform") return;
+  state.walkBusy = true;
+  let data = null;
+  try {
+    data = await postJson("/api/detect", { image: walkFrame(), lang: state.lang });
+  } catch (err) {
+    data = null;
+  }
+  state.walkBusy = false;
+  if (!state.walk || !data || !data.speech || data.speech.hazards.length === 0) return;
+  els.hazardList.replaceChildren(...data.hazards.map(hazardCard));
+  els.hazards.hidden = data.hazards.length === 0;
+  vibrate([250, 120, 250]);
+  stopSpeech(false);  // a new warning matters more than whatever was being said
+  speak(data);
+}
+
 function toggleAuto() {
   state.auto = !state.auto;
   els.auto.setAttribute("aria-pressed", String(state.auto));
@@ -632,6 +697,7 @@ function onKeyDown(event) {
     "4": () => setMode("money"),
     l: () => setLanguage(state.lang === "en" ? "hi" : "en"),
     a: toggleAuto,
+    w: toggleWalk,
     v: toggleVoice,
     escape: () => stopSpeech(),
   };
@@ -685,6 +751,7 @@ document.addEventListener("pointerdown", unlockAudio, { capture: true });
 document.addEventListener("keydown", unlockAudio, { capture: true });
 els.stop.addEventListener("click", () => stopSpeech());
 els.auto.addEventListener("click", toggleAuto);
+els.walk.addEventListener("click", toggleWalk);
 els.voice.addEventListener("click", () => { if (clickAllowed()) toggleVoice(); });
 els.volume.addEventListener("input", () => { audio.volume = Number(els.volume.value); });
 document.addEventListener("keydown", onKeyDown);
@@ -695,3 +762,4 @@ setStatus(t(window.matchMedia("(pointer: coarse)").matches ? "readyTouch" : "rea
 checkHealth();
 startCamera();
 setInterval(autoTick, 500);
+setInterval(walkTick, 350);

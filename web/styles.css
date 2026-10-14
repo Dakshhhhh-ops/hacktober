@@ -290,6 +290,7 @@ video {
 }
 
 #auto[aria-pressed="true"]::after,
+#walk[aria-pressed="true"]::after,
 #voice[aria-pressed="true"]::after {
   content: " ✓";
 }

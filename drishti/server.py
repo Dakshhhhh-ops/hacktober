@@ -6,6 +6,7 @@ import base64
 import binascii
 import mimetypes
 import secrets
+import threading
 import time
 
 from fastapi import Body, FastAPI, Request
@@ -13,15 +14,17 @@ from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse,
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import config, tts, vlm, voice
-from .schema import DescribeResponse, ErrorInfo, FindResult, Lang, Mode, Money, Scene, Speech
-from .speech import RepeatFilter, build_speech, hazard_cards, object_names
+from . import config, detector, tts, vlm, voice
+from .schema import (DescribeResponse, ErrorInfo, FindResult, Hazard, Lang, Mode, Money, Scene,
+                     Speech)
+from .speech import RepeatFilter, build_speech, hazard_cards, hazard_sentence, object_names
 
 # Windows sometimes maps .js to text/plain, which browsers refuse for module scripts.
 mimetypes.add_type("text/javascript", ".js")
 
 app = FastAPI(title="DrishtiAI")
 repeats = RepeatFilter(config.REPEAT_SUPPRESS_S)
+walk_repeats = RepeatFilter(config.WALK_REPEAT_S)
 
 _IMAGE_SIGNATURES = (b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")  # JPEG, PNG
 KEY_COOKIE = "drishti_key"
@@ -71,6 +74,11 @@ class RenderRequest(BaseModel):
     blurry: bool = False
 
 
+class DetectRequest(BaseModel):
+    image: str  # base64 JPEG or PNG, as for /api/describe
+    lang: Lang = "en"
+
+
 class SpeakRequest(BaseModel):
     text: str = Field(max_length=2000)
     lang: Lang = "en"
@@ -110,6 +118,7 @@ def health():
         "tts": {lang: tts.engine(lang) for lang in ("en", "hi")},
         "voice": {lang: voice.available(lang) for lang in ("en", "hi")},
         "voice_engine": voice.engine("en"),
+        "detector": detector.available(),
         "change_threshold": config.CHANGE_THRESHOLD,
         "min_interval_s": config.MIN_INTERVAL_S,
     }
@@ -149,6 +158,57 @@ def describe(request: DescribeRequest):
         blurry=request.blurry, retries=result.retries, inference_ms=result.inference_ms,
         total_ms=round((time.perf_counter() - started) * 1000),
     )
+
+
+@app.post("/api/detect")
+def detect(request: DetectRequest):
+    """Walk mode: a fast check for people, vehicles and animals that are close or ahead.
+
+    Only warnings that were not given in the last few seconds are returned. This uses the
+    object detector alone (tens of milliseconds); the vision-language model is not called.
+    """
+    started = time.perf_counter()
+    image = request.image.split(",", 1)[-1].strip()
+    problem = _check_image(image)
+    if problem:
+        return JSONResponse(status_code=400, content={"message": problem})
+    if not detector.available():
+        return JSONResponse(status_code=503, content={
+            "message": "The object detector is not installed, so walk mode is unavailable.",
+            "fix": "Download yolox_nano.onnx into models/yolox (see the README)."})
+    try:
+        frame = base64.b64decode(image, validate=True)
+    except (binascii.Error, ValueError):
+        return JSONResponse(status_code=400, content={"message": "The image is not valid base64."})
+    found = detector.detect(frame)
+    warnings = detector.walk_warnings(found)
+    sentences = walk_repeats.fresh([hazard_sentence(h, request.lang) for h in warnings])
+    return {
+        "lang": request.lang,
+        "speech": {"hazards": sentences, "rest": []},
+        "hazards": [{"sentence": hazard_sentence(h, request.lang), "what": h.what,
+                     "where": h.where, "distance": h.distance} for h in warnings],
+        "objects": [{"label": d.label, "score": d.score, "box": d.box} for d in found],
+        "detect_ms": round((time.perf_counter() - started) * 1000),
+    }
+
+
+def _warm_walk_voices() -> None:
+    """Synthesise the walk-mode warnings ahead of time, so the first one is not slow."""
+    for lang in ("en", "hi"):
+        if tts.engine(lang) is None:
+            continue
+        for what in sorted(set(detector.HAZARD_NAMES.values())):
+            for where, distance in (("left", "near"), ("ahead", "near"), ("right", "near"),
+                                    ("ahead", "mid")):
+                hazard = Hazard(what=what, where=where, distance=distance)
+                tts.synthesize(hazard_sentence(hazard, lang), lang)
+
+
+@app.on_event("startup")
+def _start_warming() -> None:
+    if detector.available():
+        threading.Thread(target=_warm_walk_voices, daemon=True).start()
 
 
 @app.post("/api/render", response_model=DescribeResponse)

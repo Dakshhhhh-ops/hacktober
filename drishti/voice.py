@@ -32,6 +32,7 @@ COMMANDS = {
         "find": ["find", "where", "search", "locate", "looking"],
         # Not "note": "find my notebook" must stay a find.
         "money": ["money", "rupee", "cash", "currency", "much"],
+        "walk": ["walk"],
         "stop": ["stop", "quiet", "silence"],
         "repeat": ["repeat", "again"],
         "hindi": ["hindi"],
@@ -42,6 +43,7 @@ COMMANDS = {
         "read": ["पढ़ो", "पढ़", "पढ़िए", "रीड"],
         "find": ["खोजो", "ढूंढो", "ढूँढो", "कहां", "कहाँ", "फाइंड"],
         "money": ["पैसे", "पैसा", "नोट", "रुपये", "रुपए", "रुपया", "कितने", "मनी"],
+        "walk": ["चलो", "चलना", "चलें", "वॉक"],
         # Several ways to say stop: with only three, the small Vosk model missed "रुको".
         "stop": ["रुको", "रुकिए", "रुक", "ठहरो", "बंद", "चुप", "बस", "शांत", "स्टॉप"],
         "repeat": ["दोबारा", "फिर"],
@@ -71,8 +73,8 @@ HINDI_OBJECTS = {
 }
 # Shown to Whisper as context, which makes the command words more likely to be heard right.
 WHISPER_HINTS = {
-    "en": "Voice commands: describe. read. find my water bottle. where is the door. how much money. stop. repeat. Hindi. English.",
-    "hi": "आवाज़ के आदेश: बताओ। पढ़ो। मेरी बोतल कहां है। खोजो। कितने पैसे हैं। रुको। बस। दोबारा। हिंदी। अंग्रेजी।",
+    "en": "Voice commands: describe. read. find my water bottle. where is the door. how much money. walk. stop. repeat. Hindi. English.",
+    "hi": "आवाज़ के आदेश: बताओ। पढ़ो। मेरी बोतल कहां है। खोजो। कितने पैसे हैं। चलो। रुको। बस। दोबारा। हिंदी। अंग्रेजी।",
 }
 
 _whisper = None
@@ -211,7 +213,7 @@ def _is_trigger(word: str, triggers: list[str], lang: str) -> bool:
 def parse(text: str, lang: str = "en") -> dict:
     """Turn recognised words into {"command": ..., "target": ...}.
 
-    command is one of describe, read, find, money, stop, repeat, hindi, english, or "" when
+    command is one of describe, read, find, money, walk, stop, repeat, hindi, english, or "" when
     nothing was understood. target is the object to look for (find only), in English.
     Words that are not a command are kept as a possible target, so "bottle" on its own
     can answer the question "What are you looking for?".

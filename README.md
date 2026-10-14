@@ -17,6 +17,9 @@ Best Open-Source AI Project track. *Drishti* (दृष्टि) is Hindi for s
 - **Read**: reads visible text such as signs, labels and packaging.
 - **Find**: you name an object; it answers found, not found or uncertain, with a rough location.
 - **Money**: says which Indian rupee notes or coins it sees and adds up the total.
+- **Walk mode**: a few times a second, a fast object detector warns about people,
+  vehicles and animals that are close or straight ahead, without waiting for the slower
+  model.
 - Speaks the answer with an offline voice, in English or Hindi.
 - Works from the keyboard alone, or by voice alone: say "describe", "read",
   "find my bottle" or "how much money". Speech is recognised offline.
@@ -178,6 +181,36 @@ at all, `espeak-ng` is used when it is on the PATH.
 Open http://127.0.0.1:8000 and allow camera access. The server listens on this machine
 only. The first description after starting is slower because the model is being loaded.
 
+### Walk mode
+
+The vision-language model takes a few seconds per picture, which is too slow while
+walking. Walk mode uses a small object detector instead,
+[YOLOX-Nano](https://github.com/Megvii-BaseDetection/YOLOX) (Apache-2.0, 3.6 MB), on the
+CPU. Download it once:
+
+```
+mkdir models\yolox
+curl -L -o models\yolox\yolox_nano.onnx https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx
+```
+
+Press **W** or say "walk". About three times a second the page sends a small frame; the
+detector answers in 20 to 60 ms, and the app says things like "Careful: vehicle ahead,
+near." It warns about anything near, and about things at mid distance straight ahead; it
+does not repeat the same warning within 6 seconds. Warnings are synthesised when the
+server starts and kept, so they play at once instead of after 1 to 3 s of synthesis.
+
+What it can and cannot do:
+
+- It knows people, bicycles, motorbikes, vehicles and animals. It says "vehicle" and
+  "animal" on purpose: it has never seen an auto-rickshaw (it calls one a truck or a bus)
+  and it called a cow seen close up a dog.
+- It **cannot** see steps, potholes, open drains or kerbs. Those still need the
+  Surroundings mode, and a cane.
+- Distance is a guess from how much of the picture an object fills.
+- Adding its detections to the Surroundings answers was measured and did not help: on
+  both evaluation sets it found nothing the vision-language model had missed, and it
+  called red-and-white plastic barriers a train. So it is used only for walk mode.
+
 ### Voice commands
 
 For someone who cannot see the screen, typing and aiming at buttons are the hard part. Turn
@@ -190,6 +223,7 @@ voice on once (the **Voice commands** button, or **V**), then speak:
 | "find my water bottle", "where is the door" | Find mode for that object |
 | "find" | Asks "What are you looking for?" and waits for the object |
 | "money", "how much money", "which rupee note" | Money mode, then says the notes and coins |
+| "walk" | Walk mode on or off |
 | "stop" | Stops the speech |
 | "repeat" | Says the last answer again |
 | "Hindi" / "English" | Switches language |
@@ -266,6 +300,7 @@ does not load, allow Python through the firewall when Windows asks.
 | 1 / 2 / 3 / 4 | Surroundings / Read / Find / Money |
 | L | Switch between English and Hindi (also the buttons at the top right) |
 | A | Auto-monitor on or off (experimental) |
+| W | Walk mode on or off |
 | V | Voice commands on or off |
 | Esc | Stop speech |
 | Enter (in the Find box) | Search for what you typed |
