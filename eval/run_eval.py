@@ -90,7 +90,20 @@ def percentile(values: list[float], p: float) -> float:
     return ordered[min(rank, len(ordered)) - 1]
 
 
-def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe, detect=None) -> list[dict]:
+def shrink(image_bytes: bytes, max_side: int) -> bytes:
+    """Resize like the page does before sending a frame: longer side at most max_side, JPEG 80."""
+    import cv2
+    import numpy as np
+    image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
+    scale = min(1.0, max_side / max(image.shape[:2]))
+    if scale < 1.0:
+        image = cv2.resize(image, (round(image.shape[1] * scale), round(image.shape[0] * scale)),
+                           interpolation=cv2.INTER_AREA)
+    return cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
+
+
+def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe, detect=None,
+             max_side: int = 0) -> list[dict]:
     """Run the pipeline on every labelled image. One result dict per image.
 
     With `detect` (detector.detect), Surroundings answers also get the detector's hazards
@@ -117,6 +130,8 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe, detect=N
             item.update(failed=True, error="image file not found")
             continue
         image_bytes = path.read_bytes()
+        if max_side:
+            image_bytes = shrink(image_bytes, max_side)
         image_b64 = base64.b64encode(image_bytes).decode()
         try:
             if score_hazards:
@@ -246,6 +261,8 @@ def main() -> None:
     parser.add_argument("--images", type=Path, default=ROOT / "eval" / "images")
     parser.add_argument("--labels", type=Path, default=ROOT / "eval" / "labels.csv")
     parser.add_argument("--out", type=Path, default=ROOT / "eval")
+    parser.add_argument("--max-side", type=int, default=0,
+                        help="resize each image as the page does (the page uses 768)")
     parser.add_argument("--detector", action="store_true",
                         help="add the object detector's hazards, as the app does")
     args = parser.parse_args()
@@ -261,7 +278,8 @@ def main() -> None:
     print(f"Evaluating {len(rows)} images with {config.MODEL} ...")
     if args.detector and not detector.available():
         sys.exit(f"The object detector is not installed: {config.DETECTOR_MODEL}")
-    results = evaluate(rows, args.images, detect=detector.detect if args.detector else None)
+    results = evaluate(rows, args.images, detect=detector.detect if args.detector else None,
+                       max_side=args.max_side)
     summary = summarise(results)
     (args.out / "results.json").write_text(
         json.dumps({"model": config.MODEL, "summary": summary, "images": results}, indent=2,

@@ -25,7 +25,7 @@ const TEXT = {
     fallbackNote: "Rough description. The model's structured answer was invalid, so no hazards could be checked.",
     disclaimer: "DrishtiAI is an experimental aid. It can be wrong or miss hazards. It does not replace a cane, a guide dog or a human guide.",
     ready: "Ready. Press Space to describe.", readyTouch: "Ready. Touch the screen once, then say: describe.",
-    looking: "Looking…", speaking: "Speaking…",
+    looking: "Looking…", speaking: "Speaking…", stillLooking: "Still looking.",
     spoken: "Done.", stopped: "Speech stopped.", queued: "One moment, finishing the current look.",
     nothingNew: "Nothing new to say.", modeNow: "Mode:", autoOn: "Auto-monitor on.", autoOff: "Auto-monitor off.",
     needTarget: "Type what you are looking for, then press Enter.",
@@ -70,7 +70,7 @@ const TEXT = {
     fallbackNote: "मोटा विवरण। मॉडल का उत्तर सही ढाँचे में नहीं था, इसलिए ख़तरों की जाँच नहीं हो सकी।",
     disclaimer: "DrishtiAI एक प्रयोगात्मक सहायक है। यह ग़लत हो सकता है या ख़तरे छोड़ सकता है। यह छड़ी, गाइड डॉग या इंसानी मदद की जगह नहीं ले सकता।",
     ready: "तैयार। बताने के लिए Space दबाएँ।", readyTouch: "तैयार। स्क्रीन को एक बार छुएँ, फिर बोलें: बताओ।",
-    looking: "देख रहा हूँ…", speaking: "बोल रहा हूँ…",
+    looking: "देख रहा हूँ…", speaking: "बोल रहा हूँ…", stillLooking: "अभी देख रहा हूँ।",
     spoken: "हो गया।", stopped: "आवाज़ रोक दी।", queued: "एक पल, अभी देख रहा हूँ।",
     nothingNew: "कुछ नया नहीं है।", modeNow: "मोड:", autoOn: "ऑटो-निगरानी चालू।", autoOff: "ऑटो-निगरानी बंद।",
     needTarget: "लिखें कि क्या खोजना है, फिर Enter दबाएँ।",
@@ -161,6 +161,28 @@ function unlockAudio() {
 }
 
 // A short buzz on phones that support it (most Android browsers). Ignored elsewhere.
+// A short, quiet tick: on a laptop there is no vibration to confirm that a press counted.
+let tickContext = null;
+function tick() {
+  try {
+    tickContext = tickContext || new AudioContext();
+    const osc = tickContext.createOscillator();
+    const gain = tickContext.createGain();
+    const now = tickContext.currentTime;
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15 * Number(els.volume.value), now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain).connect(tickContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch (err) {
+    // No Web Audio: the status text still changes.
+  }
+}
+
+// After this long without an answer, say so: silence must not sound like a crash.
+const STILL_LOOKING_MS = 5000;
+
 function vibrate(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
@@ -330,7 +352,13 @@ async function describe({ auto = false } = {}) {
   if (auto && quality === "blurry") return;
 
   state.busy = true;
-  if (!auto) vibrate(40);  // confirms the tap was registered
+  if (!auto) {
+    vibrate(40);  // confirms the tap was registered
+    tick();
+  }
+  const slow = auto ? null : setTimeout(() => {
+    if (state.busy && !state.speaking) say(t("stillLooking"));
+  }, STILL_LOOKING_MS);
   els.describe.setAttribute("aria-busy", "true");
   if (!auto) stopSpeech(false);
   setStatus(t("looking"), "busy");
@@ -347,6 +375,7 @@ async function describe({ auto = false } = {}) {
     data = null;
   }
   const roundTripMs = performance.now() - started;
+  clearTimeout(slow);
   state.busy = false;
   els.describe.removeAttribute("aria-busy");
 
