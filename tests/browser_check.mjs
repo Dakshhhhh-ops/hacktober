@@ -129,6 +129,15 @@ await check("walk mode warns about the cows, with full sentences on the cards", 
   return problems;
 });
 
+await check("walk mode says when it cannot see, instead of staying silent", fakeCamera(
+  "eval/heldout/images/cows_road_delhi.jpg", "dark-walk", "--dark"), async (page) => {
+  await page.key("w");
+  await sleep(5000);
+  const problems = [];
+  if (!page.spoken().some((s) => /too dark/i.test(s))) problems.push(`said ${JSON.stringify(page.spoken())}`);
+  return problems;
+});
+
 await check("live Find guides to a bicycle", fakeCamera("eval/images/sidewalk_obstruction.jpg", "bicycle"), async (page) => {
   await page.key("3");
   await sleep(300);

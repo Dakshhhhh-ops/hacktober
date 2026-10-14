@@ -3,6 +3,7 @@
 This layer decides what is said; it never adds anything the model did not report, and
 it never says a scene is safe.
 """
+import threading
 import time
 
 from . import hindi
@@ -182,16 +183,23 @@ class RepeatFilter:
         self.window_s = window_s
         self._clock = clock
         self._last_spoken: dict[str, float] = {}
+        self._lock = threading.Lock()  # requests from a laptop and a phone can overlap
 
     def remember(self, sentences: list[str]) -> None:
+        with self._lock:
+            self._remember(sentences)
+
+    def _remember(self, sentences: list[str]) -> None:
         now = self._clock()
         for sentence in sentences:
             self._last_spoken[sentence.lower()] = now
 
     def fresh(self, sentences: list[str]) -> list[str]:
         """Return the sentences not spoken recently, and remember them as spoken now."""
-        now = self._clock()
-        self._last_spoken = {k: t for k, t in self._last_spoken.items() if now - t < self.window_s}
-        keep = [s for s in sentences if s.lower() not in self._last_spoken]
-        self.remember(keep)
-        return keep
+        with self._lock:
+            now = self._clock()
+            self._last_spoken = {k: t for k, t in self._last_spoken.items()
+                                 if now - t < self.window_s}
+            keep = [s for s in sentences if s.lower() not in self._last_spoken]
+            self._remember(keep)
+            return keep

@@ -16,6 +16,7 @@ const TEXT = {
     walk: "Walk mode",
     walkOn: "Walk mode on. I will warn about people, vehicles and animals close to you.",
     walkOff: "Walk mode off.",
+    walkBroken: "Walk mode is not working at the moment. Check the computer running DrishtiAI.",
     walkUnavailable: "Walk mode needs the object detector, which is not installed.",
     walkNote: "Walk mode checks a few times a second for people, vehicles and animals. It cannot see steps, holes or open drains: keep using your cane.",
     seen: "Also seen", textRead: "Text read", findAnswer: "Search result", scene: "Scene",
@@ -64,6 +65,7 @@ const TEXT = {
     walk: "चलने का मोड",
     walkOn: "चलने का मोड चालू। पास आने वाले लोगों, गाड़ियों और जानवरों के बारे में बताऊँगा।",
     walkOff: "चलने का मोड बंद।",
+    walkBroken: "चलने का मोड अभी काम नहीं कर रहा। DrishtiAI वाला कंप्यूटर देखें।",
     walkUnavailable: "चलने के मोड के लिए ऑब्जेक्ट डिटेक्टर चाहिए, जो इंस्टॉल नहीं है।",
     walkNote: "चलने का मोड हर सेकंड कुछ बार लोगों, गाड़ियों और जानवरों को देखता है। यह सीढ़ियाँ, गड्ढे या खुली नालियाँ नहीं देख सकता: छड़ी का इस्तेमाल करते रहें।",
     seen: "यह भी दिखा", textRead: "पढ़ा गया पाठ", findAnswer: "खोज का नतीजा", scene: "दृश्य",
@@ -125,6 +127,12 @@ const state = {
   walk: false,          // walk mode: fast object-detector warnings
   search: null,         // live Find in progress: { target, timer, lastKey, ... }
   walkBusy: false,      // a walk-mode check is in flight
+  walkSaid: new Map(),  // warning sentence -> when it was last actually spoken
+  walkTrouble: { since: 0, lastSaid: -Infinity },  // walk checks failing (or too dark) since
+  hazardSpeaking: false, // a warning is being spoken: nothing else may cut it off
+  hazardDone: Promise.resolve(),
+  searchGen: 0,         // bumped to cancel a live Find that is still starting
+  queuedModelOnly: false,
   busy: false,          // a describe request is in flight
   speaking: false,
   queuedManual: false,  // Space was pressed while a request was in flight
@@ -341,6 +349,7 @@ async function describe({ auto = false, modelOnly = false } = {}) {
     // Never run two inferences at once. A manual press is remembered and runs next.
     if (!auto) {
       state.queuedManual = true;
+      state.queuedModelOnly = modelOnly;
       setStatus(t("queued"), "busy");
     }
     return;
@@ -391,7 +400,9 @@ async function describe({ auto = false, modelOnly = false } = {}) {
   if (state.queuedManual) {
     // This answer is stale: the user asked again while it was in flight.
     state.queuedManual = false;
-    describe();
+    const modelOnly = state.queuedModelOnly;
+    state.queuedModelOnly = false;
+    describe({ modelOnly });
     return;
   }
   if (!data || !data.status) {
@@ -495,6 +506,23 @@ async function speak(data) {
   // Hazards are synthesised as their own clip so the warning starts as early as possible.
   const parts = [data.speech.hazards.join(" "), data.speech.rest.join(" ")].filter(Boolean);
   if (parts.length === 0) return;
+  const isWarning = data.speech.hazards.length > 0;
+  // Everything, another warning included, waits until a warning has been said in full.
+  while (state.hazardSpeaking) await state.hazardDone;
+  if (!isWarning) return speakParts(parts, data.lang);
+  let finished;
+  state.hazardSpeaking = true;
+  state.hazardDone = new Promise((resolve) => { finished = resolve; });
+  try {
+    await speakParts(parts, data.lang);
+  } finally {
+    state.hazardSpeaking = false;
+    finished();
+  }
+}
+
+async function speakParts(parts, lang) {
+  const data = { lang };
   const run = ++state.speechRun;
   const clips = parts.map((text) => fetchAudio(text, data.lang));
   state.speaking = true;
@@ -515,7 +543,9 @@ async function speak(data) {
   else setStatus(t("spoken"), "done");
 }
 
-function stopSpeech(announce = true) {
+// A warning being spoken is only cut off when the person asks (Esc, Stop, "stop").
+function stopSpeech(announce = true, { force = false } = {}) {
+  if (state.hazardSpeaking && !force) return;
   const wasSpeaking = state.speaking;
   state.speechRun++;
   state.speaking = false;
@@ -595,6 +625,9 @@ function runCommand({ command, target }) {
     describe();
   } else if (command === "walk") {
     toggleWalk();
+  } else if (command === "walk_off") {
+    if (state.walk) toggleWalk();
+    else stopAll();
   } else if (command === "find" || (state.awaitingTarget && target)) {
     setMode("find", { focus: false });
     if (!target) {
@@ -667,7 +700,9 @@ async function locate(target) {
 // Returns true if live Find started; false if the detector does not know this object.
 async function startSearch(target) {
   stopSearch(false);
+  const gen = ++state.searchGen;
   const first = await locate(target);
+  if (gen !== state.searchGen) return true;  // cancelled (Esc) or replaced while starting
   if (!first || !first.known) return false;
   stopSpeech(false);
   state.search = { target, started: performance.now(), lastKey: "", lastSaidAt: 0,
@@ -681,6 +716,7 @@ async function startSearch(target) {
 }
 
 function stopSearch(announce = true) {
+  state.searchGen++;  // also cancels a search that is still starting
   if (!state.search) return;
   clearInterval(state.search.timer);
   state.search = null;
@@ -741,7 +777,7 @@ async function searchStep(answer) {
 // Esc, or saying "stop": end the search and the speech.
 function stopAll() {
   stopSearch();
-  stopSpeech();
+  stopSpeech(true, { force: true });
 }
 
 // ---- Walk mode ----------------------------------------------------------------
@@ -759,13 +795,15 @@ function walkFrame() {
   return walkCanvas.toDataURL("image/jpeg", 0.7);
 }
 
-function toggleWalk() {
-  if (!state.walk && state.health && !state.health.detector) {
+async function toggleWalk() {
+  if (!state.walk && !state.health) await checkHealth();  // do not promise what cannot work
+  if (!state.walk && (!state.health || !state.health.detector)) {
     setStatus(t("walkUnavailable"), "error");
     say(t("walkUnavailable"));
     return;
   }
   state.walk = !state.walk;
+  state.walkTrouble = { since: 0, lastSaid: -Infinity };
   els.walk.setAttribute("aria-pressed", String(state.walk));
   els.walkNote.hidden = !state.walk;
   const message = t(state.walk ? "walkOn" : "walkOff");
@@ -774,24 +812,56 @@ function toggleWalk() {
   say(message);
 }
 
+const WALK_REPEAT_MS = 6000;       // the same warning is not said again sooner
+const WALK_TROUBLE_MS = 3000;      // say that walk mode cannot see after this long
+const WALK_TROUBLE_REPEAT_MS = 15000;
+
+// Silence in walk mode must mean "nothing close", never "not working".
+function walkTrouble(message) {
+  const now = performance.now();
+  const trouble = state.walkTrouble;
+  if (!trouble.since) trouble.since = now;
+  setStatus(message, "error");
+  if (now - trouble.since >= WALK_TROUBLE_MS && now - trouble.lastSaid >= WALK_TROUBLE_REPEAT_MS) {
+    trouble.lastSaid = now;
+    say(message);
+  }
+}
+
 async function walkTick() {
   if (!state.walk || state.walkBusy || !cameraReady() || document.hidden) return;
   const quality = frameQuality();
-  if (quality === "dark" || quality === "uniform") return;
+  if (quality === "dark" || quality === "uniform") {
+    walkTrouble(t(quality === "dark" ? "tooDark" : "uniformFrame"));
+    return;
+  }
   state.walkBusy = true;
   let data = null;
   try {
     data = await postJson("/api/detect", { image: walkFrame(), lang: state.lang });
   } catch (err) {
-    data = null;
+    data = null;  // server down, network gone, or the access cookie has expired
   }
   state.walkBusy = false;
-  if (!state.walk || !data || !data.speech || data.speech.hazards.length === 0) return;
-  els.hazardList.replaceChildren(...data.hazards.map(hazardCard));
-  els.hazards.hidden = data.hazards.length === 0;
+  if (!state.walk) return;
+  if (!data || !data.speech) {
+    walkTrouble(t("walkBroken"));
+    return;
+  }
+  state.walkTrouble.since = 0;
+  if (data.hazards.length) {
+    els.hazardList.replaceChildren(...data.hazards.map(hazardCard));
+    els.hazards.hidden = false;
+  }
+  // Say only what has not actually been said in the last few seconds, and never cut off a
+  // warning that is still being spoken: these are kept for the next check.
+  const now = performance.now();
+  const fresh = data.speech.hazards.filter((s) => !(now - (state.walkSaid.get(s) ?? -Infinity) < WALK_REPEAT_MS));
+  if (fresh.length === 0 || state.hazardSpeaking) return;
+  for (const sentence of fresh) state.walkSaid.set(sentence, now);
   vibrate([250, 120, 250]);
-  stopSpeech(false);  // a new warning matters more than whatever was being said
-  speak(data);
+  stopSpeech(false);  // a warning matters more than a description or guidance
+  speak({ lang: data.lang, speech: { hazards: fresh, rest: [] } });
 }
 
 function toggleAuto() {
@@ -802,7 +872,7 @@ function toggleAuto() {
 
 // Experimental: look again only when the picture has changed enough.
 function autoTick() {
-  if (!state.auto || !cameraReady() || document.hidden) return;
+  if (!state.auto || state.search || !cameraReady() || document.hidden) return;
   const go = shouldDescribe({
     difference: frameDifference(state.lastThumb, currentThumb()),
     threshold: state.threshold,

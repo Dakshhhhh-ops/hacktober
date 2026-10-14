@@ -157,3 +157,24 @@ class BlurNoteTests(unittest.TestCase):
     def test_hindi(self):
         _, rest = build_speech(SCENE, "surroundings", "hi", blurry=True)
         self.assertTrue(rest[0].startswith("तस्वीर धुँधली है"))
+
+
+class RepeatFilterThreadTests(unittest.TestCase):
+    def test_two_clients_at_once_do_not_break_it(self):
+        import threading
+        repeats = RepeatFilter(20)
+        errors = []
+
+        def hammer(prefix):
+            try:
+                for i in range(2000):
+                    repeats.fresh([f"{prefix} {i % 50}"])
+            except Exception as err:  # "dictionary changed size during iteration"
+                errors.append(err)
+
+        threads = [threading.Thread(target=hammer, args=(name,)) for name in ("laptop", "phone")]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(errors, [])

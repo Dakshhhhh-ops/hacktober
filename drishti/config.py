@@ -65,8 +65,6 @@ WHISPER_THREADS = _env("WHISPER_THREADS", 8, int)
 # Fast object detection (YOLOX, ONNX, on the CPU). Without the file, detection is off.
 DETECTOR_MODEL = ROOT / "models" / "yolox" / _env("DETECTOR_MODEL", "yolox_nano.onnx")
 DETECTOR_THREADS = _env("DETECTOR_THREADS", 4, int)
-# Walk mode does not repeat the same warning within this many seconds.
-WALK_REPEAT_S = _env("DRISHTI_WALK_REPEAT_S", 6, float)
 
 PROMPTS_DIR = ROOT / "prompts"
 WEB_DIR = ROOT / "web"

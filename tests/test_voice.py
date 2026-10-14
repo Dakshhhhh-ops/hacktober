@@ -145,3 +145,14 @@ class WalkCommandTests(unittest.TestCase):
         self.assertEqual(voice.parse("walk"), {"command": "walk", "target": ""})
         self.assertEqual(voice.parse("walk mode please")["command"], "walk")
         self.assertEqual(voice.parse("चलो", "hi")["command"], "walk")
+
+
+class ReviewFixTests(unittest.TestCase):
+    def test_how_many_people_is_not_money(self):
+        self.assertNotEqual(voice.parse("कितने लोग हैं", "hi")["command"], "money")
+        self.assertEqual(voice.parse("कितने पैसे हैं", "hi")["command"], "money")
+
+    def test_stop_walk_mode_turns_walk_mode_off(self):
+        self.assertEqual(voice.parse("stop walk mode")["command"], "walk_off")
+        self.assertEqual(voice.parse("चलना बंद करो", "hi")["command"], "walk_off")
+        self.assertEqual(voice.parse("stop")["command"], "stop")

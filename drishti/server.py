@@ -25,7 +25,6 @@ mimetypes.add_type("text/javascript", ".js")
 
 app = FastAPI(title="DrishtiAI")
 repeats = RepeatFilter(config.REPEAT_SUPPRESS_S)
-walk_repeats = RepeatFilter(config.WALK_REPEAT_S)
 
 _IMAGE_SIGNATURES = (b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")  # JPEG, PNG
 KEY_COOKIE = "drishti_key"
@@ -171,8 +170,10 @@ def describe(request: DescribeRequest):
 def detect(request: DetectRequest):
     """Walk mode: a fast check for people, vehicles and animals that are close or ahead.
 
-    Only warnings that were not given in the last few seconds are returned. This uses the
-    object detector alone (tens of milliseconds); the vision-language model is not called.
+    Every current warning is returned. The page decides what to say, and does not repeat
+    a warning it has actually played in the last few seconds: if the server marked it as
+    said and the page was then cut off mid-sentence, the warning would be lost. This uses
+    the object detector alone (tens of milliseconds); the vision-language model is not called.
     """
     started = time.perf_counter()
     image = request.image.split(",", 1)[-1].strip()
@@ -189,7 +190,7 @@ def detect(request: DetectRequest):
         return JSONResponse(status_code=400, content={"message": "The image is not valid base64."})
     found = detector.detect(frame)
     warnings = detector.walk_warnings(found)
-    sentences = walk_repeats.fresh([hazard_sentence(h, request.lang) for h in warnings])
+    sentences = [hazard_sentence(h, request.lang) for h in warnings]
     return {
         "lang": request.lang,
         "speech": {"hazards": sentences, "rest": []},
@@ -208,6 +209,12 @@ def _object_name(target: str) -> str:
     return " ".join(words)
 
 
+def _spoken_name(target: str, matched: str, lang: str) -> str:
+    """In English, the person's own words ("water bottle"); in Hindi, the matched object's
+    last word, so a "laptop bag" is a बैग and not a लैपटॉप."""
+    return _object_name(target) if lang == "en" else matched.split()[-1]
+
+
 @app.post("/api/locate")
 def locate(request: LocateRequest):
     """Live Find: where is the thing being looked for, in this frame? Tens of milliseconds.
@@ -216,8 +223,8 @@ def locate(request: LocateRequest):
     then asks the vision-language model instead.
     """
     started = time.perf_counter()
-    labels = detector.find_labels(request.target)
-    if labels is None or not detector.available():
+    match = detector.find_match(request.target)
+    if match is None or not detector.available():
         return {"known": False, "found": False}
     image = request.image.split(",", 1)[-1].strip()
     problem = _check_image(image)
@@ -227,13 +234,14 @@ def locate(request: LocateRequest):
         frame = base64.b64decode(image, validate=True)
     except (binascii.Error, ValueError):
         return JSONResponse(status_code=400, content={"message": "The image is not valid base64."})
+    name, labels = match
     best = detector.locate(detector.detect(frame), labels)
     answer = {"known": True, "found": best is not None,
               "detect_ms": round((time.perf_counter() - started) * 1000)}
     if best is not None:
         answer.update(where=best.where, distance=best.distance, box=best.box, score=best.score,
-                      sentence=locate_sentence(_object_name(request.target), best.where,
-                                               best.distance, request.lang))
+                      sentence=locate_sentence(_spoken_name(request.target, name, request.lang),
+                                               best.where, best.distance, request.lang))
     return answer
 
 

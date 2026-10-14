@@ -42,7 +42,8 @@ COMMANDS = {
         "describe": ["बताओ", "बताइए", "देखो", "आसपास", "सामने", "डिस्क्राइब"],
         "read": ["पढ़ो", "पढ़", "पढ़िए", "रीड"],
         "find": ["खोजो", "ढूंढो", "ढूँढो", "कहां", "कहाँ", "फाइंड"],
-        "money": ["पैसे", "पैसा", "नोट", "रुपये", "रुपए", "रुपया", "कितने", "मनी"],
+        # Not "कितने" (how many) alone: "कितने लोग हैं" is about people, not money.
+        "money": ["पैसे", "पैसा", "नोट", "रुपये", "रुपए", "रुपया", "मनी"],
         "walk": ["चलो", "चलना", "चलें", "वॉक"],
         # Several ways to say stop: with only three, the small Vosk model missed "रुको".
         "stop": ["रुको", "रुकिए", "रुक", "ठहरो", "बंद", "चुप", "बस", "शांत", "स्टॉप"],
@@ -216,7 +217,8 @@ def _is_trigger(word: str, triggers: list[str], lang: str) -> bool:
 def parse(text: str, lang: str = "en") -> dict:
     """Turn recognised words into {"command": ..., "target": ...}.
 
-    command is one of describe, read, find, money, walk, stop, repeat, hindi, english, or "" when
+    command is one of describe, read, find, money, walk, walk_off, stop, repeat, hindi,
+    english, or "" when
     nothing was understood. target is the object to look for (find only), in English.
     Words that are not a command are kept as a possible target, so "bottle" on its own
     can answer the question "What are you looking for?".
@@ -233,6 +235,8 @@ def parse(text: str, lang: str = "en") -> dict:
             # "stop" wins over everything; otherwise the first command mentioned wins.
             if name == "stop" or not command:
                 command = name
+    if command == "stop" and any(_is_trigger(w, COMMANDS[lang]["walk"], lang) for w in words):
+        return {"command": "walk_off", "target": ""}  # "stop walk mode"
     if not command and lang == "en" and len(words) == 1 and len(words[0]) >= 3:
         # A lone word one letter away from a command is taken as that command.
         near = [name for word, name in _SINGLE_WORDS.items() if _one_edit_apart(words[0], word)]

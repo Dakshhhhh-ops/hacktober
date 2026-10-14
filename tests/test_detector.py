@@ -104,20 +104,17 @@ class SpeechCacheTests(unittest.TestCase):
 class DetectEndpointTests(unittest.TestCase):
     JPEG = base64.b64encode(b"\xff\xd8\xff\xe0" + b"0" * 64).decode()
 
-    def setUp(self):
-        server.walk_repeats = server.RepeatFilter(6)
-
     def call(self, found):
         with mock.patch.object(detector, "available", return_value=True), \
                 mock.patch.object(detector, "detect", return_value=found):
             return server.detect(server.DetectRequest(image=self.JPEG))
 
-    def test_close_things_are_warned_about_once_within_a_few_seconds(self):
+    def test_every_current_warning_is_returned_and_the_page_decides_what_to_repeat(self):
+        # If the server marked a warning as said and the page was cut off mid-sentence,
+        # the warning would be lost for seconds. So the server never filters.
         cow = [box("cow", 0.3, 0.1, 0.7, 0.95)]
-        first = self.call(cow)
-        self.assertEqual(first["speech"]["hazards"], ["Careful: animal ahead, near."])
-        self.assertEqual(self.call(cow)["speech"]["hazards"], [])
-        self.assertEqual(len(self.call(cow)["hazards"]), 1)  # still shown, just not spoken
+        for _ in range(2):
+            self.assertEqual(self.call(cow)["speech"]["hazards"], ["Careful: animal ahead, near."])
 
     def test_hindi(self):
         with mock.patch.object(detector, "available", return_value=True), \
@@ -151,6 +148,11 @@ class FindTests(unittest.TestCase):
         for target in ("keys", "door", "medicine", "spectacles"):
             self.assertIsNone(detector.find_labels(target), target)
 
+    def test_a_known_word_that_only_describes_the_object_does_not_count(self):
+        # "car keys" are keys, not a car: the request must end with the object.
+        for target in ("car keys", "phone charger", "table fan", "bus ticket", "dog leash"):
+            self.assertIsNone(detector.find_labels(target), target)
+
     def test_the_most_confident_match_is_chosen_and_weak_ones_ignored(self):
         found = [box("bottle", 0.0, 0.4, 0.1, 0.6, score=0.5), box("bottle", 0.8, 0.4, 1.0, 0.6, score=0.7),
                  box("cup", 0.4, 0.4, 0.6, 0.6, score=0.95), box("bottle", 0.4, 0.4, 0.6, 0.6, score=0.2)]
@@ -175,6 +177,14 @@ class LocateEndpointTests(unittest.TestCase):
     def test_hindi(self):
         answer = self.call("bottle", [box("bottle", 0.45, 0.4, 0.55, 0.65)], "hi")
         self.assertEqual(answer["sentence"], "बोतल सामने, थोड़ी दूर।")
+
+    def test_hindi_names_the_object_not_the_word_before_it(self):
+        answer = self.call("laptop bag", [box("backpack", 0.45, 0.4, 0.55, 0.65)], "hi")
+        self.assertTrue(answer["sentence"].startswith("बैग"), answer["sentence"])
+
+    def test_car_keys_are_left_to_the_vision_model_even_next_to_a_car(self):
+        self.assertEqual(self.call("car keys", [box("car", 0.3, 0.1, 0.7, 0.95)]),
+                         {"known": False, "found": False})
 
     def test_not_in_view(self):
         self.assertEqual(self.call("phone", [box("cup", 0.4, 0.4, 0.6, 0.6)])["found"], False)

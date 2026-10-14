@@ -122,23 +122,24 @@ def available() -> bool:
     return _load() is not None
 
 
-def _grids():
-    """Anchor centres and strides for a 416 px YOLOX input (strides 8, 16, 32)."""
+def _grids(input_size: int = INPUT_SIZE):
+    """Anchor centres and strides for a square YOLOX input (strides 8, 16, 32)."""
     import numpy as np
     grids, strides = [], []
     for stride in (8, 16, 32):
-        size = INPUT_SIZE // stride
+        size = input_size // stride
         ys, xs = np.meshgrid(np.arange(size), np.arange(size), indexing="ij")
         grids.append(np.stack((xs, ys), axis=-1).reshape(-1, 2))
         strides.append(np.full((size * size, 1), stride))
     return np.concatenate(grids), np.concatenate(strides)
 
 
-def decode(raw, ratio: float, width: int, height: int, min_score: float = MIN_SCORE):
+def decode(raw, ratio: float, width: int, height: int, min_score: float = MIN_SCORE,
+           input_size: int = INPUT_SIZE):
     """Turn the network's (N, 85) output into Detections in frame fractions."""
     import cv2
     import numpy as np
-    grids, strides = _grids()
+    grids, strides = _grids(input_size)
     xy = (raw[:, :2] + grids) * strides
     wh = np.exp(raw[:, 2:4]) * strides
     scores = raw[:, 4:5] * raw[:, 5:]
@@ -172,14 +173,17 @@ def detect(image_bytes: bytes) -> list[Detection]:
     if image is None:
         return []
     height, width = image.shape[:2]
-    ratio = min(INPUT_SIZE / height, INPUT_SIZE / width)
+    # 416 for YOLOX-Nano and -Tiny, 640 for the larger ones: read it from the model.
+    size = session.get_inputs()[0].shape[2]
+    size = size if isinstance(size, int) else INPUT_SIZE
+    ratio = min(size / height, size / width)
     resized = cv2.resize(image, (int(width * ratio), int(height * ratio)),
                          interpolation=cv2.INTER_LINEAR)
-    padded = np.full((INPUT_SIZE, INPUT_SIZE, 3), 114, np.uint8)
+    padded = np.full((size, size, 3), 114, np.uint8)
     padded[:resized.shape[0], :resized.shape[1]] = resized
     blob = padded.transpose(2, 0, 1)[None].astype(np.float32)  # BGR, 0-255, as trained
     raw = session.run(None, {session.get_inputs()[0].name: blob})[0][0]
-    return decode(raw, ratio, width, height, DECODE_MIN_SCORE)
+    return decode(raw, ratio, width, height, DECODE_MIN_SCORE, size)
 
 
 _NEAREST_FIRST = {"near": 0, "mid": 1, "far": 2}
@@ -209,14 +213,23 @@ _FINDABLE_KEYS = sorted(FINDABLE, key=len, reverse=True)
 FIND_MIN_SCORE = 0.35  # lower than for warnings: the person is told it is a guess as they turn
 
 
-def find_labels(target: str) -> tuple[str, ...] | None:
-    """The COCO classes for what the person asked to find, or None if the detector
-    does not know it (then the vision-language model is asked instead)."""
+def find_match(target: str) -> tuple[str, tuple[str, ...]] | None:
+    """(the object's name, its COCO classes) for what the person asked to find, or None
+    if the detector does not know it; then the vision-language model is asked instead.
+
+    The request must END with the object: "my water bottle" is a bottle, but "car keys",
+    "phone charger" and "table fan" are not a car, a phone and a table.
+    """
     words = " " + " ".join(target.lower().replace("-", " ").split()) + " "
     for key in _FINDABLE_KEYS:
-        if f" {key} " in words or f" {key}s " in words:
-            return FINDABLE[key]
+        if words.endswith(f" {key} ") or words.endswith(f" {key}s "):
+            return key, FINDABLE[key]
     return None
+
+
+def find_labels(target: str) -> tuple[str, ...] | None:
+    match = find_match(target)
+    return match[1] if match else None
 
 
 def locate(detections: list[Detection], labels: tuple[str, ...]) -> Detection | None:
