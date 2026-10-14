@@ -462,6 +462,18 @@ To check the real model end to end (needs Ollama running; slow, and not mocked):
 It sends a rendered EXIT sign through the pipeline in Read and Surroundings modes, checks
 that valid JSON came back and the sign was read, and prints the measured latency.
 
+To check the real page in a browser, with an evaluation photo as a fake webcam (needs
+Chrome and the server running; `--with-model` also waits for a full description):
+
+```
+node tests/browser_check.mjs --with-model
+```
+
+It checks that a dark frame is never sent to the model and the user is told why, that
+walk mode warns about cows on a Delhi street, that live Find guides to a bicycle without
+asking the slow model, and that a blurred frame is described with a warning that it is
+blurred.
+
 ## 16. Agent Skill
 
 [skill/describe-scene](skill/describe-scene/SKILL.md) follows the
