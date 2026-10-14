@@ -14,5 +14,5 @@ empty_road_1.jpg,?road|edge|pole|sign|tree|trees|vehicle|person|grass|curb,
 empty_road_trees.jpg,?tree|trees|branch|branches|road edge|edge|pothole|patch|crack|road,
 living_room_kolkata.jpg,?table|bench|chair|chairs|furniture|door|sofa|bed|cabinet|wardrobe|statue|elephant|cupboard;?table|bench|chair|chairs|furniture,
 gandhi_room.jpg,?railing|fence|barrier|door|spinning wheel|charkha|wheel|stool|table|box|furniture,
-station_board_hapur.jpg,n/a,हापुड़ जंक्शन HAPUR JN.
+station_board_hapur.jpg,n/a,हापुड़ जंक्शन HAPUR JN. H.T. FROM M.S.L. 213.81M
 station_board_chandi_mandir.jpg,n/a,चण्डी मन्दिर CHANDI MANDIR समुद्र-तल से ऊँचाई 353.83 मी. HEIGHT ABOVE MSL 353.83 Mtr.

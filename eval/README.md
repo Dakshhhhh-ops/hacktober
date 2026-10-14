@@ -22,7 +22,14 @@ Ollama must be running with the configured model. Nothing here is mocked.
 
 The held-out photos were chosen and labelled after the prompts were written, and must not
 be used to tune them: once a prompt is changed because of a held-out image, that image
-belongs in the tuning set. To compare models, set `OLLAMA_MODEL`, write each run to
+belongs in the tuning set. Labels may still be corrected when they are wrong, openly:
+
+- 15 October 2026, `station_board_hapur.jpg`: the small line "H.T. FROM M.S.L. 213.81M"
+  had been left out as too small to read, but it is readable and the model read it
+  exactly, so it was added. The Urdu line is still not in the label (it could not be
+  transcribed reliably); the model's invented Arabic for it still counts against it.
+
+To compare models, set `OLLAMA_MODEL`, write each run to
 `eval/compare/<model>/<set>/`, then run `python eval/compare_models.py`.
 
 ## Label format
