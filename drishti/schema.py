@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 Where = Literal["left", "right", "ahead", "below"]
 Distance = Literal["near", "mid", "far"]
-Mode = Literal["surroundings", "read", "find"]
+Mode = Literal["surroundings", "read", "find", "money"]
 Lang = Literal["en", "hi"]
 
 
@@ -53,6 +53,17 @@ class FindScene(Scene):
     find_result: FindResult
 
 
+class Money(_Strict):
+    """One Indian note or coin. Only values that are issued can be returned."""
+    value: Literal[1, 2, 5, 10, 20, 50, 100, 200, 500, 2000]
+    kind: Literal["note", "coin"]
+
+
+class MoneyScene(Scene):
+    """What the model returns in Money mode: the common schema plus the money seen."""
+    money: list[Money]
+
+
 class ErrorInfo(BaseModel):
     message: str
     fix: str = ""
@@ -80,6 +91,7 @@ class DescribeResponse(BaseModel):
     model: str
     scene: Scene | None = None
     find_result: FindResult | None = None
+    money: list[Money] = []  # Money mode: each note or coin seen
     speech: Speech = Speech()
     hazards: list[HazardCard] = []   # the warnings in speech.hazards, with their parts
     objects: list[str] = []          # names of things seen, in the output language

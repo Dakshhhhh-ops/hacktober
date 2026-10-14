@@ -14,7 +14,7 @@ from pydantic import ValidationError
 
 from . import config
 from .latency_log import log_attempts
-from .schema import FindResult, FindScene, Scene
+from .schema import FindResult, FindScene, Money, MoneyScene, Scene
 
 
 class VLMError(RuntimeError):
@@ -35,6 +35,11 @@ class Result:
     request_id: str
     model: str
     attempts: list[dict] = field(default_factory=list)
+    money: list[Money] = field(default_factory=list)
+
+
+SCHEMAS = {"find": FindScene, "money": MoneyScene}
+SCHEMA_PROMPTS = {"find": "schema_find", "money": "schema_money"}
 
 
 def _prompt(name: str) -> str:
@@ -45,7 +50,7 @@ def build_messages(image_b64: str, mode: str, lang: str, target: str = "") -> li
     user = "\n\n".join([
         _prompt(f"mode_{mode}").replace("{target}", target.strip() or "unclear"),
         _prompt("lang_en"),  # always English: see drishti/hindi.py for why
-        _prompt("schema_find" if mode == "find" else "schema"),
+        _prompt(SCHEMA_PROMPTS.get(mode, "schema")),
     ])
     return [
         {"role": "system", "content": _prompt("describe_scene")},
@@ -87,8 +92,7 @@ def parse_scene(text: str, mode: str = "surroundings") -> Scene:
     start, end = text.find("{"), text.rfind("}")
     if start < 0 or end <= start:
         raise ValueError("no JSON object in the reply")
-    schema = FindScene if mode == "find" else Scene
-    return schema.model_validate_json(text[start:end + 1])
+    return SCHEMAS.get(mode, Scene).model_validate_json(text[start:end + 1])
 
 
 def generation_schema(model) -> dict:
@@ -115,7 +119,7 @@ def describe(image_b64: str, mode: str = "surroundings", lang: str = "en", targe
     a fallback Scene has an empty hazard list and status "fallback".
     """
     request_id = uuid.uuid4().hex[:12]
-    schema = FindScene if mode == "find" else Scene
+    schema = SCHEMAS.get(mode, Scene)
     messages = build_messages(image_b64, mode, lang, target)
     payload = {
         "model": config.MODEL,
@@ -190,6 +194,7 @@ def describe(image_b64: str, mode: str = "surroundings", lang: str = "en", targe
         request_id=request_id,
         model=config.MODEL,
         attempts=attempts,
+        money=scene.money if isinstance(scene, MoneyScene) else [],
     )
 
 

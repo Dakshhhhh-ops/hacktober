@@ -1,0 +1,3 @@
+Mode: money. The person wants to know which Indian rupee notes or coins they are holding.
+Put one item in "money" for every separate note or coin you can see, with its value in rupees and whether it is a "note" or a "coin". Read the value from the numerals printed on it (for example ₹500, 200, 100); the colour and the picture can confirm it but must not replace the numerals. If a value cannot be read, leave that item out. Do not count foreign money. If there is no Indian money in the image, return an empty "money" list.
+"text" must be an empty list. "objects" must be an empty list. "hazards" must be an empty list.

@@ -5,13 +5,15 @@ import { startListening } from "./voice.js";
 const TEXT = {
   en: {
     tagline: "An offline assistant that describes what is in front of you",
-    mode: "Mode", surroundings: "Surroundings", read: "Read", find: "Find",
+    mode: "Mode", surroundings: "Surroundings", read: "Read", find: "Find", money: "Money",
     surroundingsHint: "Hazards first, then one line about the scene",
     readHint: "Reads signs, labels and packaging",
     findHint: "Looks for one object you name",
+    moneyHint: "Says which rupee notes or coins it sees",
     findLabel: "What are you looking for?", describe: "Describe now", stop: "Stop speech",
     auto: "Auto-monitor", volume: "Volume", warning: "Warning", live: "Live",
     seen: "Also seen", textRead: "Text read", findAnswer: "Search result", scene: "Scene",
+    moneyAnswer: "Money seen",
     raw: "Model output (JSON)", languageHint: "switches language",
     autoNote: "Auto-monitor is experimental. It only looks again when the picture changes, so it can miss things. It is not continuous hazard detection.",
     fallbackNote: "Rough description. The model's structured answer was invalid, so no hazards could be checked.",
@@ -33,7 +35,7 @@ const TEXT = {
     modelTime: "model", roundTrip: "round trip", retries: "retries",
     tapHint: "Tap the picture to describe",
     voice: "Voice commands", heard: "Heard:", listening: "Listening…",
-    voiceOn: "Voice commands on. Say describe, read, find, or stop.",
+    voiceOn: "Voice commands on. Say describe, read, find, money, or stop.",
     voiceOff: "Voice commands off.", askTarget: "What are you looking for?",
     notUnderstood: "Sorry, I did not catch that.",
     noMic: "No microphone. Allow microphone access in the browser and try again.",
@@ -41,13 +43,15 @@ const TEXT = {
   },
   hi: {
     tagline: "ऑफ़लाइन सहायक जो बताता है कि आपके सामने क्या है",
-    mode: "मोड", surroundings: "आसपास", read: "पढ़ो", find: "खोजो",
+    mode: "मोड", surroundings: "आसपास", read: "पढ़ो", find: "खोजो", money: "पैसे",
     surroundingsHint: "पहले ख़तरे, फिर आसपास के बारे में एक पंक्ति",
     readHint: "बोर्ड, लेबल और पैकेट पढ़ता है",
     findHint: "आपकी बताई एक चीज़ खोजता है",
+    moneyHint: "बताता है कि कौन-से नोट या सिक्के हैं",
     findLabel: "आप क्या खोज रहे हैं?", describe: "अभी बताओ", stop: "आवाज़ रोको",
     auto: "ऑटो-निगरानी", volume: "आवाज़", warning: "चेतावनी", live: "लाइव",
     seen: "यह भी दिखा", textRead: "पढ़ा गया पाठ", findAnswer: "खोज का नतीजा", scene: "दृश्य",
+    moneyAnswer: "दिखे हुए पैसे",
     raw: "मॉडल का उत्तर (JSON)", languageHint: "से भाषा बदलती है",
     autoNote: "ऑटो-निगरानी प्रयोगात्मक है। यह तभी दोबारा देखती है जब तस्वीर बदलती है, इसलिए चीज़ें छूट सकती हैं। यह लगातार ख़तरा पहचानने की सुविधा नहीं है।",
     fallbackNote: "मोटा विवरण। मॉडल का उत्तर सही ढाँचे में नहीं था, इसलिए ख़तरों की जाँच नहीं हो सकी।",
@@ -69,7 +73,7 @@ const TEXT = {
     modelTime: "मॉडल", roundTrip: "कुल समय", retries: "दोबारा कोशिश",
     tapHint: "बताने के लिए तस्वीर पर टैप करें",
     voice: "आवाज़ से चलाएँ", heard: "सुना:", listening: "सुन रहा हूँ…",
-    voiceOn: "आवाज़ से चलाना चालू। बोलें: बताओ, पढ़ो, बोतल कहां है, या बस।",
+    voiceOn: "आवाज़ से चलाना चालू। बोलें: बताओ, पढ़ो, बोतल कहां है, कितने पैसे, या बस।",
     voiceOff: "आवाज़ से चलाना बंद।", askTarget: "आप क्या खोज रहे हैं?",
     notUnderstood: "माफ़ कीजिए, समझ नहीं आया।",
     noMic: "माइक्रोफ़ोन नहीं मिला। ब्राउज़र में माइक्रोफ़ोन की अनुमति दें और फिर कोशिश करें।",
@@ -209,7 +213,8 @@ async function setLanguage(lang) {
   try {
     const data = await postJson("/api/render", {
       scene: previous.scene, mode: previous.mode, lang, target: previous.target,
-      find_result: previous.find_result, fallback: previous.status === "fallback",
+      find_result: previous.find_result, money: previous.money || [],
+      fallback: previous.status === "fallback",
     });
     if (!data.status || data.status === "error") return;
     show({ ...data, model: previous.model, inference_ms: previous.inference_ms, retries: previous.retries },
@@ -351,7 +356,7 @@ function show(data, roundTripMs) {
   els.spoken.textContent = data.speech.rest.join("\n");
   els.spoken.dataset.kind = kind;
   els.spoken.dataset.find = data.find_result ? data.find_result.status : "";
-  els.spokenLabel.textContent = t({ read: "textRead", find: "findAnswer", summary: "scene" }[kind]);
+  els.spokenLabel.textContent = t({ read: "textRead", find: "findAnswer", money: "moneyAnswer", summary: "scene" }[kind]);
   els.spokenLabel.hidden = data.speech.rest.length === 0;
 
   const showObjects = data.mode === "surroundings" && data.status === "ok" && data.objects.length > 0;
@@ -363,8 +368,9 @@ function show(data, roundTripMs) {
     ? `${data.model} · ${t("modelTime")} ${seconds(data.inference_ms)} · ${t("roundTrip")} ${seconds(roundTripMs)}`
       + (data.retries ? ` · ${t("retries")} ${data.retries}` : "")
     : data.model;
-  els.raw.textContent = JSON.stringify(
-    data.find_result ? { ...data.scene, find_result: data.find_result } : data.scene, null, 2);
+  const extra = data.find_result ? { find_result: data.find_result }
+    : data.mode === "money" && data.status === "ok" ? { money: data.money } : {};
+  els.raw.textContent = JSON.stringify({ ...data.scene, ...extra }, null, 2);
 }
 
 // ---- Speech -------------------------------------------------------------------
@@ -498,6 +504,9 @@ function runCommand({ command, target }) {
   } else if (command === "read") {
     setMode("read", { focus: false });
     describe();
+  } else if (command === "money") {
+    setMode("money", { focus: false });
+    describe();
   } else if (command === "find" || (state.awaitingTarget && target)) {
     setMode("find", { focus: false });
     if (!target) {
@@ -588,6 +597,7 @@ function onKeyDown(event) {
     "1": () => setMode("surroundings"),
     "2": () => setMode("read"),
     "3": () => setMode("find"),
+    "4": () => setMode("money"),
     l: () => setLanguage(state.lang === "en" ? "hi" : "en"),
     a: toggleAuto,
     v: toggleVoice,

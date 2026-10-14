@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import config, tts, vlm, voice
-from .schema import DescribeResponse, ErrorInfo, FindResult, Lang, Mode, Scene, Speech
+from .schema import DescribeResponse, ErrorInfo, FindResult, Lang, Mode, Money, Scene, Speech
 from .speech import RepeatFilter, build_speech, hazard_cards, object_names
 
 # Windows sometimes maps .js to text/plain, which browsers refuse for module scripts.
@@ -65,6 +65,7 @@ class RenderRequest(BaseModel):
     lang: Lang = "en"
     target: str = Field(default="", max_length=config.MAX_TARGET_CHARS)
     find_result: FindResult | None = None
+    money: list[Money] = []
     fallback: bool = False
 
 
@@ -129,7 +130,8 @@ def describe(request: DescribeRequest):
         return _error(request, 503, str(err), err.fix, started)
 
     hazards, rest = build_speech(result.scene, request.mode, request.lang, request.target,
-                                 result.find_result, fallback=result.status == "fallback")
+                                 result.find_result, fallback=result.status == "fallback",
+                                 money=result.money)
     if request.auto:
         # Automatic frames only speak what has not been said recently.
         hazards, rest = repeats.fresh(hazards), repeats.fresh(rest)
@@ -138,7 +140,7 @@ def describe(request: DescribeRequest):
 
     return DescribeResponse(
         request_id=result.request_id, status=result.status, mode=request.mode, lang=request.lang,
-        model=result.model, scene=result.scene, find_result=result.find_result,
+        model=result.model, scene=result.scene, find_result=result.find_result, money=result.money,
         speech=Speech(hazards=hazards, rest=rest),
         hazards=[c for c in hazard_cards(result.scene, request.lang) if c["sentence"] in hazards],
         objects=object_names(result.scene, request.lang), target=request.target.strip(),
@@ -151,12 +153,14 @@ def describe(request: DescribeRequest):
 def render(request: RenderRequest):
     """Word an existing scene again, for example after switching language. No model call."""
     hazards, rest = build_speech(request.scene, request.mode, request.lang, request.target,
-                                 request.find_result, fallback=request.fallback)
+                                 request.find_result, fallback=request.fallback,
+                                 money=request.money)
     repeats.remember(hazards + rest)
     return DescribeResponse(
         request_id="", status="fallback" if request.fallback else "ok", mode=request.mode,
         lang=request.lang, model=config.MODEL, scene=request.scene,
-        find_result=request.find_result, speech=Speech(hazards=hazards, rest=rest),
+        find_result=request.find_result, money=request.money,
+        speech=Speech(hazards=hazards, rest=rest),
         hazards=hazard_cards(request.scene, request.lang),
         objects=object_names(request.scene, request.lang), target=request.target.strip(),
     )

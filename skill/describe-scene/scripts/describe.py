@@ -32,7 +32,7 @@ def fail(message: str, fix: str = "") -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("image", type=Path, help="path to a JPEG or PNG file")
-    parser.add_argument("--mode", choices=["surroundings", "read", "find"], default="surroundings")
+    parser.add_argument("--mode", choices=["surroundings", "read", "find", "money"], default="surroundings")
     parser.add_argument("--lang", choices=["en", "hi"], default="en")
     parser.add_argument("--target", default="", help="what to look for (find mode)")
     args = parser.parse_args()
@@ -63,6 +63,8 @@ def main() -> None:
     }
     if result.find_result is not None:
         output["find_result"] = result.find_result.model_dump()
+    if args.mode == "money":
+        output["money"] = [item.model_dump() for item in result.money]
     sys.stdout.reconfigure(encoding="utf-8")
     print(json.dumps(output, indent=2, ensure_ascii=False))
 

@@ -128,3 +128,22 @@ class EvaluateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MoneyEvalTests(unittest.TestCase):
+    run_eval_with = EvaluateTests.run_eval_with
+
+    def money(self, *values):
+        from drishti.schema import Money
+        found = result()
+        found.money = [Money(value=v, kind="note") for v in values]
+        return found
+
+    def test_money_is_scored_by_denomination_and_a_wrong_value_is_counted(self):
+        rows = [{"image": f"{n}.jpg", "hazards_true": "n/a", "text_true": "", "money_true": truth}
+                for n, truth in (("a", "500"), ("b", "100;2000"), ("c", "50"), ("d", "10"))]
+        answers = [self.money(500), self.money(100, 100, 2000), self.money(500), self.money()]
+        _, summary = self.run_eval_with(rows, answers)
+        self.assertEqual((summary["money_images"], summary["money_correct"]), (4, 2))
+        self.assertEqual(summary["money_wrong_value"], 1)
+        self.assertEqual(summary["money_nothing_seen"], 1)

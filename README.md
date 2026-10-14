@@ -16,9 +16,10 @@ Best Open-Source AI Project track. *Drishti* (दृष्टि) is Hindi for s
 - **Surroundings**: describes the scene, warning about physical hazards before anything else.
 - **Read**: reads visible text such as signs, labels and packaging.
 - **Find**: you name an object; it answers found, not found or uncertain, with a rough location.
+- **Money**: says which Indian rupee notes or coins it sees and adds up the total.
 - Speaks the answer with an offline voice, in English or Hindi.
-- Works from the keyboard alone, or by voice alone: say "describe", "read" or
-  "find my bottle". Speech is recognised offline.
+- Works from the keyboard alone, or by voice alone: say "describe", "read",
+  "find my bottle" or "how much money". Speech is recognised offline.
 
 ## 2. Problem and intended users
 
@@ -184,6 +185,7 @@ voice on once (the **Voice commands** button, or **V**), then speak:
 | "read" | Read mode, then reads the text |
 | "find my water bottle", "where is the door" | Find mode for that object |
 | "find" | Asks "What are you looking for?" and waits for the object |
+| "money", "how much money", "which rupee note" | Money mode, then says the notes and coins |
 | "stop" | Stops the speech |
 | "repeat" | Says the last answer again |
 | "Hindi" / "English" | Switches language |
@@ -257,7 +259,7 @@ does not load, allow Python through the firewall when Windows asks.
 | Key | Action |
 | --- | --- |
 | Space | Describe what the camera sees now |
-| 1 / 2 / 3 | Surroundings / Read / Find |
+| 1 / 2 / 3 / 4 | Surroundings / Read / Find / Money |
 | L | Switch between English and Hindi (also the buttons at the top right) |
 | A | Auto-monitor on or off (experimental) |
 | V | Voice commands on or off |

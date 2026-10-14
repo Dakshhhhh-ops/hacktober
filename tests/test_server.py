@@ -166,3 +166,23 @@ class AccessKeyTests(unittest.TestCase):
     def test_no_key_configured_means_no_check(self):
         with mock.patch.object(server.config, "ACCESS_KEY", ""):
             self.assertEqual(self.client.get("/").status_code, 200)
+
+
+class MoneyEndpointTests(unittest.TestCase):
+    def test_money_is_in_the_envelope_and_spoken(self):
+        from drishti.schema import Money
+        money = [Money(value=100, kind="note"), Money(value=100, kind="note")]
+        found = vlm.Result(scene=Scene.from_summary("Two notes."), find_result=None, status="ok",
+                           retries=0, inference_ms=900, request_id="m1", model="test-model",
+                           money=money)
+        server.repeats = server.RepeatFilter(20)
+        with mock.patch.object(vlm, "describe", return_value=found):
+            response = server.describe(server.DescribeRequest(image=JPEG, mode="money"))
+        self.assertEqual([m.value for m in response.money], [100, 100])
+        self.assertEqual(response.speech.rest, ["2 notes of 100 rupees.", "Total 200 rupees."])
+
+    def test_render_rewords_money_in_hindi_without_the_model(self):
+        response = server.render(server.RenderRequest(
+            scene=Scene.from_summary(""), mode="money", lang="hi",
+            money=[{"value": 500, "kind": "note"}]))
+        self.assertEqual(response.speech.rest, ["500 रुपये का नोट।"])

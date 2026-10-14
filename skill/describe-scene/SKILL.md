@@ -16,7 +16,7 @@ app. The image is sent only to the model running on this machine.
 ## How to run it
 
 ```
-python scripts/describe.py <image> [--mode surroundings|read|find] [--target "<object>"] [--lang en|hi]
+python scripts/describe.py <image> [--mode surroundings|read|find|money] [--target "<object>"] [--lang en|hi]
 ```
 
 Run it from this skill's folder inside the DrishtiAI repository, with the repository's
@@ -52,6 +52,7 @@ The model is chosen with the `OLLAMA_MODEL` environment variable or the reposito
 - `where` for a hazard is one of `left`, `right`, `ahead`, `below`; `distance` is `near`,
   `mid` or `far`. Both are rough visual judgements from a single camera, not measurements.
 - In find mode there is also `"find_result": {"status": "found" | "not_found" | "uncertain", "where": "..."}`.
+- In money mode there is also `"money": [{"value": 500, "kind": "note"}, ...]`, one item per Indian note or coin seen.
 
 ## How to report the result to the user
 

@@ -116,3 +116,25 @@ class DescribeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MoneyModeTests(unittest.TestCase):
+    def reply(self, money):
+        return json.dumps({**SCENE, "hazards": [], "text": [], "money": money})
+
+    def test_money_is_returned(self):
+        post = fake_post(self.reply([{"value": 500, "kind": "note"}]))
+        result = vlm.describe(IMAGE, "money", post=post, log=False)
+        self.assertEqual([(m.value, m.kind) for m in result.money], [(500, "note")])
+        self.assertIn("money", post.calls[0]["format"]["properties"])
+
+    def test_a_value_that_is_not_issued_is_rejected(self):
+        post = fake_post(self.reply([{"value": 300, "kind": "note"}]),
+                         self.reply([{"value": "500", "kind": "note"}]), "Some notes.")
+        result = vlm.describe(IMAGE, "money", post=post, log=False)
+        self.assertEqual(result.status, "fallback")
+        self.assertEqual(result.money, [])
+
+    def test_other_modes_have_no_money(self):
+        result = vlm.describe(IMAGE, "surroundings", post=fake_post(GOOD), log=False)
+        self.assertEqual(result.money, [])

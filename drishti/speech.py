@@ -6,7 +6,7 @@ it never says a scene is safe.
 import time
 
 from . import hindi
-from .schema import FindResult, Hazard, Scene
+from .schema import FindResult, Hazard, Money, Scene
 
 MAX_OBJECTS_SPOKEN = 4
 
@@ -30,6 +30,11 @@ PHRASES = {
         "no_text": "No readable text.",
         "nothing": "Nothing clear to report.",
         "fallback": "Rough description: {summary}",
+        "no_money": "I cannot see any Indian money.",
+        "money_one": "{value} rupee {kind}.",
+        "money_many": "{count} {kind}s of {value} rupees.",
+        "money_total": "Total {total} rupees.",
+        "note": "note", "coin": "coin",
     },
     "hi": {
         "hazard": "सावधान: {where} {what}, {distance}।",
@@ -40,6 +45,11 @@ PHRASES = {
         "no_text": "कोई पढ़ने लायक लिखावट नहीं है।",
         "nothing": "कुछ साफ़ नहीं दिख रहा।",
         "fallback": "मोटा विवरण: {summary}",
+        "no_money": "कोई भारतीय नोट या सिक्का नहीं दिख रहा।",
+        "money_one": "{value} रुपये का {kind}।",
+        "money_many": "{value} रुपये के {count} {kind}।",
+        "money_total": "कुल {total} रुपये।",
+        "note": "नोट", "coin": "सिक्का",
         "objects": "दिख रहा है: {objects}।",
     },
 }
@@ -75,6 +85,26 @@ def object_names(scene: Scene, lang: str = "en", limit: int = 6) -> list[str]:
     return list(dict.fromkeys(n for n in names if n))[:limit]
 
 
+def money_sentences(money: list[Money], lang: str = "en") -> list[str]:
+    """'500 rupee note.' or, for several, one line per value, largest first, then the total.
+
+    The total is added up here, never taken from the model.
+    """
+    phrases = PHRASES[lang]
+    if not money:
+        return [phrases["no_money"]]
+    counts: dict[tuple[int, str], int] = {}
+    for item in money:
+        counts[(item.value, item.kind)] = counts.get((item.value, item.kind), 0) + 1
+    lines = []
+    for (value, kind), count in sorted(counts.items(), reverse=True):
+        key = "money_one" if count == 1 else "money_many"
+        lines.append(phrases[key].format(value=value, kind=phrases[kind], count=count))
+    if len(money) > 1:
+        lines.append(phrases["money_total"].format(total=sum(item.value for item in money)))
+    return lines
+
+
 def _short(summary: str) -> str:
     words = summary.split()
     return summary.strip() if len(words) <= MAX_SUMMARY_WORDS else " ".join(words[:MAX_SUMMARY_WORDS]) + "."
@@ -82,7 +112,7 @@ def _short(summary: str) -> str:
 
 def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
                  find_result: FindResult | None = None, fallback: bool = False,
-                 ) -> tuple[list[str], list[str]]:
+                 money: list[Money] | None = None) -> tuple[list[str], list[str]]:
     """Return (hazard sentences, other sentences). Hazards are nearest first.
 
     Objects and text are only spoken in the mode that asks for them. A fallback scene
@@ -99,6 +129,8 @@ def build_speech(scene: Scene, mode: str, lang: str = "en", target: str = "",
     elif mode == "read":
         lines = [line.strip() for line in scene.text if line.strip()]
         rest = lines or [phrases["no_text"]]
+    elif mode == "money":
+        rest = money_sentences(money or [], lang)
     elif mode == "find" and find_result is not None:
         name = hindi.translate(target) if lang == "hi" else target.strip()
         if find_result.status == "found":

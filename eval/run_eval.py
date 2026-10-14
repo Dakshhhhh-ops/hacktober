@@ -78,6 +78,11 @@ def text_similarity(truth: str, predicted_lines: list[str]) -> float:
     return SequenceMatcher(None, normalise(truth), normalise(" ".join(predicted_lines))).ratio()
 
 
+def parse_money_label(cell: str) -> set[int]:
+    """'100;2000' -> {100, 2000}: the denominations that are in the image."""
+    return {int(v) for v in cell.split(";") if v.strip()}
+
+
 def percentile(values: list[float], p: float) -> float:
     """Nearest-rank percentile; with few samples p95 is simply the slowest or near it."""
     ordered = sorted(values)
@@ -96,6 +101,7 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[
         score_hazards = hazard_cell.lower() != "n/a"
         labels = parse_hazard_labels(hazard_cell) if score_hazards else []
         text_true = (row.get("text_true") or "").strip()
+        money_cell = (row.get("money_true") or "").strip()
         item = {"image": name, "hazards_scored": score_hazards,
                 "hazards_true": [s[0] for s in labels if not s[0].startswith("?")],
                 "hazards_optional": [s[0].lstrip("?") for s in labels if s[0].startswith("?")],
@@ -122,11 +128,22 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe) -> list[
                 item.setdefault("status", read.status)
                 item["text_predicted"] = read.scene.text
                 item["text_similarity"] = round(text_similarity(text_true, read.scene.text), 3)
+            if money_cell:
+                money = describe(image_b64, "money", "en")
+                item["latencies_ms"].append(money.inference_ms)
+                item.setdefault("status", money.status)
+                truth, seen = parse_money_label(money_cell), {m.value for m in money.money}
+                # Correct means exactly the denominations that are there. Saying a value
+                # that is not there is the dangerous mistake, so it is counted on its own.
+                item.update(money_true=sorted(truth), money_predicted=sorted(seen),
+                            money_correct=seen == truth, money_wrong_value=bool(seen - truth))
         except vlm.VLMError as err:
             item.update(failed=True, error=str(err))
         print(f"  {name}: " + ("FAILED " + item["error"] if item["failed"] else
               f"missed={item['missed']} false_alarms={item['false_alarms']} "
-              f"text_similarity={item.get('text_similarity', 'n/a')}"))
+              f"text_similarity={item.get('text_similarity', 'n/a')}"
+              + (f" money={item['money_predicted']} (true {item['money_true']})"
+                 if "money_true" in item else "")))
     return results
 
 
@@ -140,6 +157,7 @@ def summarise(results: list[dict]) -> dict:
     hazard_free = [r for r in scored if not r["hazards_true"]]
     texts = [r["text_similarity"] for r in done if "text_similarity" in r]
     latencies = [ms for r in done for ms in r["latencies_ms"]]
+    money = [r for r in done if "money_true" in r]
     return {
         "images": len(results),
         "images_scored_for_hazards": len(scored),
@@ -159,6 +177,10 @@ def summarise(results: list[dict]) -> dict:
         "text_images": len(texts),
         "text_mean_similarity": round(statistics.mean(texts), 3) if texts else None,
         "text_read_correctly": sum(s >= TEXT_CORRECT_RATIO for s in texts),
+        "money_images": len(money),
+        "money_correct": sum(r["money_correct"] for r in money),
+        "money_wrong_value": sum(r["money_wrong_value"] for r in money),
+        "money_nothing_seen": sum(not r["money_predicted"] for r in money),
         "inferences_timed": len(latencies),
         "latency_median_ms": round(statistics.median(latencies)) if latencies else None,
         "latency_p95_ms": round(percentile(latencies, 95)) if latencies else None,
@@ -190,6 +212,9 @@ def to_markdown(summary: dict, results: list[dict], model: str) -> str:
         f"| Hazard-free images that still got a warning | {s['hazard_free_images_with_alarm']} of {s['hazard_free_images']} |",
         f"| Text read correctly (similarity >= {TEXT_CORRECT_RATIO:.0%}) | {s['text_read_correctly']} of {s['text_images']} |",
         f"| Mean text similarity | {_show(s['text_mean_similarity'])} |",
+        *([f"| Money: denominations exactly right | {s['money_correct']} of {s['money_images']} |",
+           f"| **Money: said a value that is not there** | **{s['money_wrong_value']}** |",
+           f"| Money: nothing recognised | {s['money_nothing_seen']} |"] if s["money_images"] else []),
         f"| Median model latency | {_show(s['latency_median_ms'], ' ms')} |",
         f"| p95 model latency | {_show(s['latency_p95_ms'], ' ms')} ({s['inferences_timed']} inferences) |",
         "",

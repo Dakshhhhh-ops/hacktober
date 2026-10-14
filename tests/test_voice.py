@@ -125,3 +125,16 @@ class ListenEndpointTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MoneyCommandTests(unittest.TestCase):
+    def test_english(self):
+        for said in ("money", "how much money is this", "which rupee note is this", "cash"):
+            self.assertEqual(voice.parse(said), {"command": "money", "target": ""}, said)
+
+    def test_a_notebook_is_still_something_to_find(self):
+        self.assertEqual(voice.parse("find my notebook"), {"command": "find", "target": "notebook"})
+
+    def test_hindi(self):
+        self.assertEqual(voice.parse("कितने पैसे हैं", "hi")["command"], "money")
+        self.assertEqual(voice.parse("यह कौन सा नोट है", "hi")["command"], "money")

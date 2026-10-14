@@ -121,3 +121,27 @@ class RepeatFilterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MoneySpeechTests(unittest.TestCase):
+    def money(self, *items):
+        from drishti.schema import Money
+        return [Money(value=v, kind=k) for v, k in items]
+
+    def test_one_note(self):
+        _, rest = build_speech(EMPTY, "money", money=self.money((500, "note")))
+        self.assertEqual(rest, ["500 rupee note."])
+
+    def test_several_are_grouped_largest_first_and_totalled_here(self):
+        items = self.money((100, "note"), (500, "note"), (100, "note"), (10, "coin"))
+        _, rest = build_speech(EMPTY, "money", money=items)
+        self.assertEqual(rest, ["500 rupee note.", "2 notes of 100 rupees.", "10 rupee coin.",
+                                "Total 710 rupees."])
+
+    def test_hindi(self):
+        _, rest = build_speech(EMPTY, "money", "hi", money=self.money((200, "note"), (200, "note")))
+        self.assertEqual(rest, ["200 रुपये के 2 नोट।", "कुल 400 रुपये।"])
+
+    def test_no_money_says_so(self):
+        _, rest = build_speech(EMPTY, "money", money=[])
+        self.assertEqual(rest, ["I cannot see any Indian money."])
