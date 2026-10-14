@@ -138,3 +138,46 @@ class DetectEndpointTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FindTests(unittest.TestCase):
+    def test_what_a_person_asks_for_maps_to_detector_classes(self):
+        self.assertEqual(detector.find_labels("my water bottle"), ("bottle",))
+        self.assertEqual(detector.find_labels("the cups"), ("cup",))
+        self.assertEqual(detector.find_labels("mobile phone"), ("cell phone",))
+        self.assertIn("backpack", detector.find_labels("laptop bag"))  # a bag, not a laptop
+
+    def test_things_the_detector_does_not_know_go_to_the_vision_model(self):
+        for target in ("keys", "door", "medicine", "spectacles"):
+            self.assertIsNone(detector.find_labels(target), target)
+
+    def test_the_most_confident_match_is_chosen_and_weak_ones_ignored(self):
+        found = [box("bottle", 0.0, 0.4, 0.1, 0.6, score=0.5), box("bottle", 0.8, 0.4, 1.0, 0.6, score=0.7),
+                 box("cup", 0.4, 0.4, 0.6, 0.6, score=0.95), box("bottle", 0.4, 0.4, 0.6, 0.6, score=0.2)]
+        best = detector.locate(found, ("bottle",))
+        self.assertEqual((best.where, best.score), ("right", 0.7))
+        self.assertIsNone(detector.locate(found[3:], ("bottle",)))
+
+
+class LocateEndpointTests(unittest.TestCase):
+    JPEG = base64.b64encode(b"\xff\xd8\xff\xe0" + b"0" * 64).decode()
+
+    def call(self, target, found, lang="en"):
+        with mock.patch.object(detector, "available", return_value=True), \
+                mock.patch.object(detector, "detect", return_value=found):
+            return server.locate(server.LocateRequest(image=self.JPEG, target=target, lang=lang))
+
+    def test_found_says_where(self):
+        answer = self.call("my water bottle", [box("bottle", 0.0, 0.1, 0.3, 0.95)])
+        self.assertEqual((answer["known"], answer["found"]), (True, True))
+        self.assertEqual(answer["sentence"], "Water bottle on the left, near.")
+
+    def test_hindi(self):
+        answer = self.call("bottle", [box("bottle", 0.45, 0.4, 0.55, 0.65)], "hi")
+        self.assertEqual(answer["sentence"], "बोतल सामने, थोड़ी दूर।")
+
+    def test_not_in_view(self):
+        self.assertEqual(self.call("phone", [box("cup", 0.4, 0.4, 0.6, 0.6)])["found"], False)
+
+    def test_unknown_objects_are_left_to_the_vision_model(self):
+        self.assertEqual(self.call("keys", []), {"known": False, "found": False})

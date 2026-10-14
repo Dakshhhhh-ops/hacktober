@@ -26,6 +26,9 @@ const TEXT = {
     disclaimer: "DrishtiAI is an experimental aid. It can be wrong or miss hazards. It does not replace a cane, a guide dog or a human guide.",
     ready: "Ready. Press Space to describe.", readyTouch: "Ready. Touch the screen once, then say: describe.",
     looking: "Looking…", speaking: "Speaking…", stillLooking: "Still looking.",
+    searching: "Searching. Turn the camera slowly.", searchDone: "Search stopped.",
+    notSeenYet: "Not seen yet. Keep turning slowly.",
+    searchFound: "It is right in front of you.",
     spoken: "Done.", stopped: "Speech stopped.", queued: "One moment, finishing the current look.",
     nothingNew: "Nothing new to say.", modeNow: "Mode:", autoOn: "Auto-monitor on.", autoOff: "Auto-monitor off.",
     needTarget: "Type what you are looking for, then press Enter.",
@@ -71,6 +74,9 @@ const TEXT = {
     disclaimer: "DrishtiAI एक प्रयोगात्मक सहायक है। यह ग़लत हो सकता है या ख़तरे छोड़ सकता है। यह छड़ी, गाइड डॉग या इंसानी मदद की जगह नहीं ले सकता।",
     ready: "तैयार। बताने के लिए Space दबाएँ।", readyTouch: "तैयार। स्क्रीन को एक बार छुएँ, फिर बोलें: बताओ।",
     looking: "देख रहा हूँ…", speaking: "बोल रहा हूँ…", stillLooking: "अभी देख रहा हूँ।",
+    searching: "खोज रहा हूँ। कैमरा धीरे-धीरे घुमाएँ।", searchDone: "खोज बंद।",
+    notSeenYet: "अभी नहीं दिखा। धीरे-धीरे घुमाते रहें।",
+    searchFound: "यह ठीक आपके सामने है।",
     spoken: "हो गया।", stopped: "आवाज़ रोक दी।", queued: "एक पल, अभी देख रहा हूँ।",
     nothingNew: "कुछ नया नहीं है।", modeNow: "मोड:", autoOn: "ऑटो-निगरानी चालू।", autoOff: "ऑटो-निगरानी बंद।",
     needTarget: "लिखें कि क्या खोजना है, फिर Enter दबाएँ।",
@@ -117,6 +123,7 @@ const state = {
   lang: "en",
   auto: false,
   walk: false,          // walk mode: fast object-detector warnings
+  search: null,         // live Find in progress: { target, timer, lastKey, ... }
   walkBusy: false,      // a walk-mode check is in flight
   busy: false,          // a describe request is in flight
   speaking: false,
@@ -315,7 +322,7 @@ function captureFrame() {
 
 // ---- Describe -----------------------------------------------------------------
 
-async function describe({ auto = false } = {}) {
+async function describe({ auto = false, modelOnly = false } = {}) {
   if (!cameraReady()) {
     if (!auto) setStatus(t(state.cameraFailed ? "noCamera" : "cameraStarting"), "error");
     return;
@@ -328,6 +335,8 @@ async function describe({ auto = false } = {}) {
     }
     return;
   }
+  // For everyday objects the fast detector knows, guide the person live instead.
+  if (state.mode === "find" && !auto && !modelOnly && await startSearch(target)) return;
   if (state.busy) {
     // Never run two inferences at once. A manual press is remembered and runs next.
     if (!auto) {
@@ -515,6 +524,7 @@ function stopSpeech(announce = true) {
 // ---- Controls -----------------------------------------------------------------
 
 function setMode(mode, { focus = true } = {}) {
+  if (mode !== "find") stopSearch(false);
   state.mode = mode;
   for (const button of els.modeButtons) {
     button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
@@ -571,7 +581,7 @@ async function onUtterance(pcm) {
 function runCommand({ command, target }) {
   if (command === "stop") {
     state.awaitingTarget = false;
-    stopSpeech();
+    stopAll();
   } else if (command === "describe") {
     setMode("surroundings", { focus: false });
     describe();
@@ -630,6 +640,106 @@ async function toggleVoice() {
   }
   els.voice.setAttribute("aria-pressed", "true");
   say(t("voiceOn"));
+}
+
+// ---- Live Find ----------------------------------------------------------------
+// For objects the detector knows (a bottle, a phone, a bag), the page checks a few times a
+// second while the person turns the camera, and says where the object is whenever that
+// changes: "Bottle on the left, mid distance." ... "Bottle ahead, near." It stops when the
+// object is close and in front, on Esc or "stop", or after 30 s. If the object has not
+// been seen after 8 s, the vision-language model is asked once, since it knows more things.
+
+const SEARCH_TICK_MS = 400;
+const SEARCH_GIVE_UP_MS = 30000;
+const SEARCH_ASK_MODEL_MS = 8000;
+const SEARCH_REPEAT_MS = 4000;  // say the same position again after this long
+
+async function locate(target) {
+  try {
+    return await postJson("/api/locate", { image: walkFrame(), target, lang: state.lang });
+  } catch (err) {
+    return null;
+  }
+}
+
+// Returns true if live Find started; false if the detector does not know this object.
+async function startSearch(target) {
+  stopSearch(false);
+  const first = await locate(target);
+  if (!first || !first.known) return false;
+  stopSpeech(false);
+  state.search = { target, started: performance.now(), lastKey: "", lastSaidAt: 0,
+                   seen: false, askedModel: false, nudged: false, busy: false, timer: null };
+  setStatus(t("searching"), "busy");
+  tick();
+  if (first.found) await searchStep(first);
+  else say(t("searching"));
+  if (state.search) state.search.timer = setInterval(searchTick, SEARCH_TICK_MS);
+  return true;
+}
+
+function stopSearch(announce = true) {
+  if (!state.search) return;
+  clearInterval(state.search.timer);
+  state.search = null;
+  if (announce) setStatus(t("searchDone"), "idle");
+}
+
+async function searchTick() {
+  const search = state.search;
+  if (!search || search.busy || !cameraReady() || document.hidden) return;
+  const elapsed = performance.now() - search.started;
+  if (elapsed > SEARCH_GIVE_UP_MS) {
+    stopSearch();
+    say(t("searchDone"));
+    return;
+  }
+  if (!search.seen && !search.askedModel && elapsed > SEARCH_ASK_MODEL_MS) {
+    // Not found by the detector: ask the slower model, which knows more kinds of thing.
+    search.askedModel = true;
+    stopSearch(false);
+    describe({ modelOnly: true });
+    return;
+  }
+  search.busy = true;
+  const answer = await locate(search.target);
+  search.busy = false;
+  if (state.search !== search || !answer) return;
+  await searchStep(answer);
+}
+
+async function searchStep(answer) {
+  const search = state.search;
+  if (!search) return;
+  const now = performance.now();
+  if (!answer.found) {
+    if (!search.seen && !search.nudged && now - search.started > 4000 && !state.speaking) {
+      search.nudged = true;
+      say(t("notSeenYet"));
+    }
+    return;
+  }
+  search.seen = true;
+  const key = `${answer.where} ${answer.distance}`;
+  const arrived = answer.where === "ahead" && answer.distance === "near";
+  if (key === search.lastKey && now - search.lastSaidAt < SEARCH_REPEAT_MS && !arrived) return;
+  search.lastKey = key;
+  search.lastSaidAt = now;
+  setStatus(answer.sentence, "done");
+  vibrate(arrived ? [100, 60, 100, 60, 100] : 60);
+  stopSpeech(false);
+  if (arrived) {
+    stopSearch(false);
+    say(`${answer.sentence} ${t("searchFound")}`);
+  } else {
+    say(answer.sentence);
+  }
+}
+
+// Esc, or saying "stop": end the search and the speech.
+function stopAll() {
+  stopSearch();
+  stopSpeech();
 }
 
 // ---- Walk mode ----------------------------------------------------------------
@@ -728,7 +838,7 @@ function onKeyDown(event) {
     a: toggleAuto,
     w: toggleWalk,
     v: toggleVoice,
-    escape: () => stopSpeech(),
+    escape: () => stopAll(),
   };
   if (actions[key]) {
     // Without this, "3" would also be typed into the Find box that it focuses.
@@ -778,7 +888,7 @@ els.cameraFrame.addEventListener("keydown", (event) => {
 });
 document.addEventListener("pointerdown", unlockAudio, { capture: true });
 document.addEventListener("keydown", unlockAudio, { capture: true });
-els.stop.addEventListener("click", () => stopSpeech());
+els.stop.addEventListener("click", () => stopAll());
 els.auto.addEventListener("click", toggleAuto);
 els.walk.addEventListener("click", toggleWalk);
 els.voice.addEventListener("click", () => { if (clickAllowed()) toggleVoice(); });

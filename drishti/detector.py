@@ -5,6 +5,8 @@ people, vehicles and animals in tens of milliseconds, so it is used two ways:
 
 - In walk mode the page calls it several times a second for quick warnings about people,
   vehicles and animals that are close or straight ahead.
+- In Find mode, for everyday objects it knows (a bottle, a phone, a bag), it guides the
+  person live: "bottle on the left", then "bottle ahead, near" as they turn.
 - The evaluation can add its detections to the model's answers (run_eval.py --detector).
   Measured, that found no hazard the model had missed and added a false "train", so the
   app does not do it in Surroundings mode.
@@ -21,6 +23,7 @@ from .schema import Hazard
 
 INPUT_SIZE = 416
 MIN_SCORE = 0.45
+DECODE_MIN_SCORE = 0.35  # what detect() keeps; warnings use MIN_SCORE, finding a little lower
 NMS_IOU = 0.45
 
 # COCO class names, in the model's output order.
@@ -176,10 +179,50 @@ def detect(image_bytes: bytes) -> list[Detection]:
     padded[:resized.shape[0], :resized.shape[1]] = resized
     blob = padded.transpose(2, 0, 1)[None].astype(np.float32)  # BGR, 0-255, as trained
     raw = session.run(None, {session.get_inputs()[0].name: blob})[0][0]
-    return decode(raw, ratio, width, height)
+    return decode(raw, ratio, width, height, DECODE_MIN_SCORE)
 
 
 _NEAREST_FIRST = {"near": 0, "mid": 1, "far": 2}
+
+# What a person might ask to find -> the COCO classes that count as it. Longer names are
+# tried first, so "water bottle" is a bottle and "laptop bag" is a bag, not a laptop.
+FINDABLE = {
+    "water bottle": ("bottle",), "bottle": ("bottle",),
+    "cup": ("cup",), "mug": ("cup",), "glass": ("cup", "wine glass"), "tumbler": ("cup",),
+    "mobile phone": ("cell phone",), "cell phone": ("cell phone",), "phone": ("cell phone",),
+    "mobile": ("cell phone",),
+    "laptop bag": ("backpack", "handbag", "suitcase"), "school bag": ("backpack",),
+    "backpack": ("backpack",), "handbag": ("handbag",), "purse": ("handbag",),
+    "suitcase": ("suitcase",), "bag": ("backpack", "handbag", "suitcase"),
+    "laptop": ("laptop",), "keyboard": ("keyboard",), "mouse": ("mouse",),
+    "remote": ("remote",), "book": ("book",), "chair": ("chair",), "bench": ("bench",),
+    "sofa": ("couch",), "couch": ("couch",), "bed": ("bed",), "table": ("dining table",),
+    "tv": ("tv",), "television": ("tv",), "clock": ("clock",), "umbrella": ("umbrella",),
+    "toilet": ("toilet",), "sink": ("sink",), "fridge": ("refrigerator",),
+    "refrigerator": ("refrigerator",), "microwave": ("microwave",), "bowl": ("bowl",),
+    "spoon": ("spoon",), "knife": ("knife",), "fork": ("fork",), "scissors": ("scissors",),
+    "toothbrush": ("toothbrush",), "plant": ("potted plant",), "person": ("person",),
+    "dog": ("dog",), "cat": ("cat",), "bicycle": ("bicycle",), "cycle": ("bicycle",),
+    "car": ("car",), "bus": ("bus",), "scooter": ("motorcycle",), "bike": ("motorcycle", "bicycle"),
+}
+_FINDABLE_KEYS = sorted(FINDABLE, key=len, reverse=True)
+FIND_MIN_SCORE = 0.35  # lower than for warnings: the person is told it is a guess as they turn
+
+
+def find_labels(target: str) -> tuple[str, ...] | None:
+    """The COCO classes for what the person asked to find, or None if the detector
+    does not know it (then the vision-language model is asked instead)."""
+    words = " " + " ".join(target.lower().replace("-", " ").split()) + " "
+    for key in _FINDABLE_KEYS:
+        if f" {key} " in words or f" {key}s " in words:
+            return FINDABLE[key]
+    return None
+
+
+def locate(detections: list[Detection], labels: tuple[str, ...]) -> Detection | None:
+    """The most confident detection of the thing being looked for, or None."""
+    matches = [d for d in detections if d.label in labels and d.score >= FIND_MIN_SCORE]
+    return max(matches, key=lambda d: d.score, default=None)
 
 
 def hazards(detections: list[Detection], include_far: bool = False) -> list[Hazard]:
@@ -190,7 +233,7 @@ def hazards(detections: list[Detection], include_far: bool = False) -> list[Haza
     """
     chosen: dict[tuple[str, str], Hazard] = {}
     for d in detections:
-        if d.label not in HAZARD_NAMES or (d.distance == "far" and not include_far):
+        if d.label not in HAZARD_NAMES or d.score < MIN_SCORE or (d.distance == "far" and not include_far):
             continue
         hazard = d.as_hazard()
         key = (hazard.what, hazard.where)

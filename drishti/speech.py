@@ -24,6 +24,7 @@ PHRASES = {
     "en": {
         "hazard": "Careful: {what} {where}, {distance}.",
         "found": "Found {target}: {where}.",
+        "locate": "{target} {where}, {distance}.",
         "found_no_place": "Found {target}.",
         "not_found": "I cannot see {target}.",
         "uncertain": "I am not sure whether {target} is here.",
@@ -40,6 +41,7 @@ PHRASES = {
     "hi": {
         "hazard": "सावधान: {where} {what}, {distance}।",
         "found": "{target} दिख रहा है: {where}।",
+        "locate": "{target} {where}, {distance}।",
         "found_no_place": "{target} दिख रहा है।",
         "not_found": "{target} नहीं दिख रहा।",
         "uncertain": "पक्का नहीं है कि {target} यहाँ है या नहीं।",
@@ -65,6 +67,14 @@ def hazard_sentence(hazard: Hazard, lang: str) -> str:
         where=WHERE[lang][hazard.where],
         distance=DISTANCE[lang][hazard.distance],
     )
+
+
+def locate_sentence(target: str, where: str, distance: str, lang: str = "en") -> str:
+    """Live Find guidance, for example "Bottle on the left, near." or "बोतल बाईं ओर, पास।"."""
+    name = hindi.translate(target) if lang == "hi" else target.strip()
+    sentence = PHRASES[lang]["locate"].format(target=name, where=WHERE[lang][where],
+                                              distance=DISTANCE[lang][distance])
+    return sentence[0].upper() + sentence[1:]
 
 
 def hazard_cards(scene: Scene, lang: str = "en") -> list[dict]:

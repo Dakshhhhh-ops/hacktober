@@ -17,7 +17,8 @@ from pydantic import BaseModel, Field
 from . import config, detector, tts, vlm, voice
 from .schema import (DescribeResponse, ErrorInfo, FindResult, Hazard, Lang, Mode, Money, Scene,
                      Speech)
-from .speech import RepeatFilter, build_speech, hazard_cards, hazard_sentence, object_names
+from .speech import (RepeatFilter, build_speech, hazard_cards, hazard_sentence, locate_sentence,
+                     object_names)
 
 # Windows sometimes maps .js to text/plain, which browsers refuse for module scripts.
 mimetypes.add_type("text/javascript", ".js")
@@ -76,6 +77,12 @@ class RenderRequest(BaseModel):
 
 class DetectRequest(BaseModel):
     image: str  # base64 JPEG or PNG, as for /api/describe
+    lang: Lang = "en"
+
+
+class LocateRequest(BaseModel):
+    image: str  # base64 JPEG or PNG, as for /api/describe
+    target: str = Field(max_length=config.MAX_TARGET_CHARS)
     lang: Lang = "en"
 
 
@@ -191,6 +198,43 @@ def detect(request: DetectRequest):
         "objects": [{"label": d.label, "score": d.score, "box": d.box} for d in found],
         "detect_ms": round((time.perf_counter() - started) * 1000),
     }
+
+
+def _object_name(target: str) -> str:
+    """'my water bottle' -> 'water bottle', for saying it back."""
+    words = target.split()
+    while len(words) > 1 and words[0].lower() in ("my", "the", "a", "an", "mera", "meri"):
+        words = words[1:]
+    return " ".join(words)
+
+
+@app.post("/api/locate")
+def locate(request: LocateRequest):
+    """Live Find: where is the thing being looked for, in this frame? Tens of milliseconds.
+
+    "known" is false when the object detector does not know this kind of thing; the page
+    then asks the vision-language model instead.
+    """
+    started = time.perf_counter()
+    labels = detector.find_labels(request.target)
+    if labels is None or not detector.available():
+        return {"known": False, "found": False}
+    image = request.image.split(",", 1)[-1].strip()
+    problem = _check_image(image)
+    if problem:
+        return JSONResponse(status_code=400, content={"message": problem})
+    try:
+        frame = base64.b64decode(image, validate=True)
+    except (binascii.Error, ValueError):
+        return JSONResponse(status_code=400, content={"message": "The image is not valid base64."})
+    best = detector.locate(detector.detect(frame), labels)
+    answer = {"known": True, "found": best is not None,
+              "detect_ms": round((time.perf_counter() - started) * 1000)}
+    if best is not None:
+        answer.update(where=best.where, distance=best.distance, box=best.box, score=best.score,
+                      sentence=locate_sentence(_object_name(request.target), best.where,
+                                               best.distance, request.lang))
+    return answer
 
 
 def _warm_walk_voices() -> None:

@@ -16,6 +16,9 @@ Best Open-Source AI Project track. *Drishti* (दृष्टि) is Hindi for s
 - **Surroundings**: describes the scene, warning about physical hazards before anything else.
 - **Read**: reads visible text such as signs, labels and packaging.
 - **Find**: you name an object; it answers found, not found or uncertain, with a rough location.
+  For about 50 everyday things (a bottle, a cup, a phone, a bag, a chair, a laptop) it
+  guides you live instead, as you turn the camera: "Bottle on the left, mid distance" ...
+  "Bottle ahead, near. It is right in front of you."
 - **Money**: says which Indian rupee notes or coins it sees and adds up the total.
 - **Walk mode**: a few times a second, a fast object detector warns about people,
   vehicles and animals that are close or straight ahead, without waiting for the slower
@@ -210,6 +213,18 @@ What it can and cannot do:
 - Adding its detections to the Surroundings answers was measured and did not help: on
   both evaluation sets it found nothing the vision-language model had missed, and it
   called red-and-white plastic barriers a train. So it is used only for walk mode.
+
+### Live Find
+
+When the object you ask for is one the walk-mode detector knows (bottle, cup, glass,
+phone, bag, backpack, laptop, keyboard, mouse, remote, book, chair, bench, sofa, bed,
+table, TV, clock, umbrella, toilet, sink, fridge, bowl, spoon, scissors, plant, person,
+dog, cat, bicycle, scooter, car, bus and a few more), Find does not wait for the slower
+model. Turn the camera slowly; a few times a second it checks, and it speaks whenever
+the position changes. It stops when the object is close and straight ahead, on Esc or
+"stop", or after 30 seconds. If the object has not been seen after 8 seconds, the
+vision-language model is asked once, because it knows far more kinds of thing. Keys,
+doors, medicine and anything else the detector does not know go straight to the model.
 
 ### Voice commands
 
