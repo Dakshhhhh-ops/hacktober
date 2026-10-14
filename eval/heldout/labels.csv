@@ -1,0 +1,18 @@
+image,hazards_true,text_true
+broken_road_delhi.jpg,hole|open manhole|manhole|pit|pothole|broken road|broken cover|open drain|drain|gap;?debris|trash|garbage|rubbish|litter|plastic|rod|bar|slab|concrete|stick|branch,
+potholed_road_kolkata.jpg,pothole|potholes|hole|puddle|puddles|water|damaged road|wet road|flooded road;?pothole|potholes|puddle|puddles|water|wet|slippery|mud;?motorcycle|motorbike|bike|scooter|vehicle;?bollard|bollards|post|posts|pole|barrier|cone|cones;?person|people|pedestrian|pedestrians,
+potholes_bihar.jpg,puddle|pothole|water|mud|muddy road|hole|damaged road|uneven road|uneven;?puddle|water|mud|wet|slippery|uneven|rut|ruts;?pole|wire|wires;?person|man;?mound|dirt|sand|pile|gravel,
+cow_street_delhi.jpg,cow|bull|ox|cattle|animal;?person|man|pedestrian;?motorcycle|scooter|car|vehicle|vehicles|traffic|road;?stick|cane|rope|bucket,
+cow_street_madurai.jpg,cow|bull|ox|cattle|animal;?motorcycle|motorbike|vehicle|vehicles|car|auto|rickshaw|people|person|pedestrian|pedestrians|crowd|traffic|bicycle|woman|women|man,
+cows_road_delhi.jpg,cow|cows|cattle|bull|bulls|animal|animals;?cow|cows|cattle|bull|animal;?cow|cows|cattle|bull|animal;?car|vehicle;?person|man;?pole|post|curb|stairs|step|steps|wood,
+autos_ahmedabad.jpg,auto rickshaw|rickshaw|autos|auto|vehicle|vehicles|traffic|three-wheeler|tuk-tuk;?auto rickshaw|rickshaw|auto|vehicle|vehicles|tuk-tuk;?motorcycle|motorbike|scooter|bike|bus;?manhole|manhole cover|cover;?person|people|road,
+manhole_delhi.jpg,open drain|drain|hole|gap|manhole|missing slab|broken pavement|broken footpath|ditch|pit|trench|uneven|step|edge|drop;?trash|garbage|debris|litter|rubbish|bottle|cup|road|curb|kerb|edge|step|slab|plant|weeds,
+drain_unbuilt.jpg,trench|drain|open drain|ditch|hole|pit|excavation|dug|mud|muddy;?plank|planks|board|boards|wood|wooden|bridge;?person|pedestrian|man;?motorcycle|motorcycles|scooter|vehicle|auto|truck;?water|puddle|mud|wet,
+platform_kanpur.jpg,?platform edge|edge|train|pillar|pole|column|bench|seat|bin|dustbin|person|people|floor|wet floor|slippery floor;?pillar|pole|column|bench,
+platform_new_delhi.jpg,railway track|track|tracks|rails|rail|railway|platform edge|edge|drop|gap;?sack|sacks|bag|bags|bundle|parcel|luggage|pipe|pole|person|people|stones|rocks|gravel|train|debris;?track|tracks|rail|rails,
+empty_road_1.jpg,?road|edge|pole|sign|tree|trees|vehicle|person|grass|curb,
+empty_road_trees.jpg,?tree|trees|branch|branches|road edge|edge|pothole|patch|crack|road,
+living_room_kolkata.jpg,?table|bench|chair|chairs|furniture|door|sofa|bed|cabinet|wardrobe|statue|elephant|cupboard;?table|bench|chair|chairs|furniture,
+gandhi_room.jpg,?railing|fence|barrier|door|spinning wheel|charkha|wheel|stool|table|box|furniture,
+station_board_hapur.jpg,n/a,हापुड़ जंक्शन HAPUR JN.
+station_board_chandi_mandir.jpg,n/a,चण्डी मन्दिर CHANDI MANDIR समुद्र-तल से ऊँचाई 353.83 मी. HEIGHT ABOVE MSL 353.83 Mtr.
