@@ -416,6 +416,8 @@ async function describe({ auto = false, modelOnly = false } = {}) {
 
 function hazardCard(card) {
   const item = el("li");
+  // Screen readers get the whole sentence, not "cowsAhead · near" run together.
+  item.setAttribute("aria-label", card.sentence);
   const arrow = el("span", "arrow", ARROWS[card.where]);
   arrow.setAttribute("aria-hidden", "true");
   const body = el("div");
