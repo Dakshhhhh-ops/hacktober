@@ -138,3 +138,37 @@ class MoneyModeTests(unittest.TestCase):
     def test_other_modes_have_no_money(self):
         result = vlm.describe(IMAGE, "surroundings", post=fake_post(GOOD), log=False)
         self.assertEqual(result.money, [])
+
+
+class MoneySchemaTests(unittest.TestCase):
+    def test_money_mode_keeps_text_and_objects_empty_and_caps_money(self):
+        schema = vlm.generation_schema(vlm.MoneyScene, "money")["properties"]
+        self.assertEqual((schema["text"]["maxItems"], schema["objects"]["maxItems"]), (0, 0))
+        self.assertEqual(schema["money"]["maxItems"], vlm.MAX_MONEY_ITEMS)
+
+    def test_read_mode_may_return_many_lines_of_text(self):
+        schema = vlm.generation_schema(vlm.Scene, "read")["properties"]
+        self.assertNotIn("maxItems", schema["text"])
+        self.assertEqual(schema["text"]["items"]["maxLength"], vlm.MAX_LINE_CHARS)
+
+
+class RepetitionLimitTests(unittest.TestCase):
+    """A street full of shop signs made the model repeat text until the JSON broke."""
+
+    def test_outside_read_mode_text_is_short_and_few(self):
+        for mode, model in (("surroundings", vlm.Scene), ("find", vlm.FindScene)):
+            text = vlm.generation_schema(model, mode)["properties"]["text"]
+            self.assertEqual(text["maxItems"], vlm.MAX_TEXT_ITEMS_OUTSIDE_READ, mode)
+            self.assertEqual(text["items"]["maxLength"], vlm.MAX_LINE_CHARS_OUTSIDE_READ, mode)
+
+    def test_every_free_text_field_has_a_length_limit(self):
+        schema = vlm.generation_schema(vlm.FindScene, "find")
+        defs = schema["$defs"]
+        self.assertEqual(defs["Hazard"]["properties"]["what"]["maxLength"], vlm.MAX_PHRASE_CHARS)
+        self.assertEqual(defs["SceneObject"]["properties"]["where"]["maxLength"], vlm.MAX_PHRASE_CHARS)
+        self.assertEqual(defs["FindResult"]["properties"]["where"]["maxLength"], vlm.MAX_PHRASE_CHARS)
+        self.assertEqual(schema["properties"]["summary"]["maxLength"], vlm.MAX_SUMMARY_CHARS)
+
+    def test_the_model_classes_are_not_changed(self):
+        vlm.generation_schema(vlm.Scene, "surroundings")
+        self.assertNotIn("maxItems", vlm.Scene.model_json_schema()["properties"]["text"])

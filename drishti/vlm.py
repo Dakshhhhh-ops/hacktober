@@ -95,14 +95,42 @@ def parse_scene(text: str, mode: str = "surroundings") -> Scene:
     return SCHEMAS.get(mode, Scene).model_validate_json(text[start:end + 1])
 
 
-def generation_schema(model) -> dict:
+MAX_MONEY_ITEMS = 10
+MAX_TEXT_ITEMS_OUTSIDE_READ = 4
+MAX_PHRASE_CHARS = 80    # a hazard's or an object's "what" and "where"
+MAX_LINE_CHARS = 300     # one line of text, in Read mode
+MAX_LINE_CHARS_OUTSIDE_READ = 100
+MAX_SUMMARY_CHARS = 200
+
+
+def generation_schema(model, mode: str = "surroundings") -> dict:
     """The JSON schema sent to Ollama to constrain the reply.
 
-    It caps the objects list so a busy scene cannot run past the token limit. Hazards are
-    deliberately not capped: with a cap, the model padded the list by repeating items.
+    The 2B model can get stuck repeating itself ("KMC, KMC, KMC..." from a street full
+    of shop signs, or "₹500" again and again) until it runs out of tokens. The JSON is
+    then invalid and good hazard warnings that came before it are lost. So every string
+    has a length limit, and outside Read mode, where text is not spoken, only a few
+    lines of text are allowed. Money mode allows no text or objects at all.
+
+    Hazards are deliberately not capped: with a cap, the model padded the list by
+    repeating items.
     """
     schema = model.model_json_schema()
-    schema["properties"]["objects"]["maxItems"] = config.MAX_OBJECTS
+    properties, defs = schema["properties"], schema["$defs"]
+    for name in ("Hazard", "SceneObject"):
+        defs[name]["properties"]["what"]["maxLength"] = MAX_PHRASE_CHARS
+    defs["SceneObject"]["properties"]["where"]["maxLength"] = MAX_PHRASE_CHARS
+    if "FindResult" in defs:
+        defs["FindResult"]["properties"]["where"]["maxLength"] = MAX_PHRASE_CHARS
+    properties["text"]["items"]["maxLength"] = MAX_LINE_CHARS
+    properties["summary"]["maxLength"] = MAX_SUMMARY_CHARS
+    properties["objects"]["maxItems"] = config.MAX_OBJECTS
+    if mode != "read":
+        properties["text"]["maxItems"] = MAX_TEXT_ITEMS_OUTSIDE_READ
+        properties["text"]["items"]["maxLength"] = MAX_LINE_CHARS_OUTSIDE_READ
+    if mode == "money":
+        properties["text"]["maxItems"] = properties["objects"]["maxItems"] = 0
+        properties["money"]["maxItems"] = MAX_MONEY_ITEMS
     return schema
 
 
@@ -125,7 +153,7 @@ def describe(image_b64: str, mode: str = "surroundings", lang: str = "en", targe
         "model": config.MODEL,
         "messages": messages,
         "stream": False,
-        "format": generation_schema(schema),
+        "format": generation_schema(schema, mode),
         "keep_alive": "30m",
         "options": {"temperature": 0, "num_predict": config.MAX_TOKENS},
     }
