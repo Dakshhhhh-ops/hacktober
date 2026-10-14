@@ -137,3 +137,32 @@ class SpeakEndpointTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AccessKeyTests(unittest.TestCase):
+    """Phone mode: only a device that opened the link with the key can use the app."""
+
+    def setUp(self):
+        from fastapi.testclient import TestClient
+        patcher = mock.patch.object(server.config, "ACCESS_KEY", "secret-key")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.client = TestClient(server.app, base_url="https://testserver")
+
+    def test_without_the_key_everything_is_refused(self):
+        self.assertEqual(self.client.get("/").status_code, 403)
+        self.assertEqual(self.client.get("/api/health").status_code, 403)
+        self.assertEqual(self.client.get("/?key=wrong").status_code, 403)
+
+    def test_the_link_sets_a_cookie_and_removes_the_key_from_the_address(self):
+        response = self.client.get("/?key=secret-key", follow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/")
+        cookie = response.headers["set-cookie"].lower()
+        self.assertIn("httponly", cookie)
+        self.assertIn("secure", cookie)
+        self.assertEqual(self.client.get("/").status_code, 200)
+
+    def test_no_key_configured_means_no_check(self):
+        with mock.patch.object(server.config, "ACCESS_KEY", ""):
+            self.assertEqual(self.client.get("/").status_code, 200)

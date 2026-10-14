@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.11"
       # The unit tests mock the model and the voice engine, so Ollama and Piper are not needed.
-      - run: pip install fastapi uvicorn pydantic
+      - run: pip install fastapi uvicorn pydantic httpx
       - run: python -m unittest discover -s tests -t .
       - uses: actions/setup-node@v4
         with:

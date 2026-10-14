@@ -5,10 +5,11 @@ Run with:  python -m drishti
 import base64
 import binascii
 import mimetypes
+import secrets
 import time
 
-from fastapi import Body, FastAPI
-from fastapi.responses import JSONResponse, Response
+from fastapi import Body, FastAPI, Request
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -23,6 +24,30 @@ app = FastAPI(title="DrishtiAI")
 repeats = RepeatFilter(config.REPEAT_SUPPRESS_S)
 
 _IMAGE_SIGNATURES = (b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")  # JPEG, PNG
+KEY_COOKIE = "drishti_key"
+
+
+def _key_matches(given: str | None) -> bool:
+    return bool(given) and secrets.compare_digest(given.encode(), config.ACCESS_KEY.encode())
+
+
+@app.middleware("http")
+async def require_access_key(request: Request, call_next):
+    """In phone mode, only a device that opened the QR code's link may use the app.
+
+    The link carries ?key=...; the page is then reloaded without it and the key is kept
+    in a cookie the page's scripts cannot read.
+    """
+    if not config.ACCESS_KEY or _key_matches(request.cookies.get(KEY_COOKIE)):
+        return await call_next(request)
+    if _key_matches(request.query_params.get("key")):
+        response = RedirectResponse(request.url.path, status_code=303)
+        response.set_cookie(KEY_COOKIE, config.ACCESS_KEY, max_age=30 * 24 * 3600,
+                            httponly=True, secure=True, samesite="strict")
+        return response
+    return PlainTextResponse(
+        "DrishtiAI: this device does not have the access key. Scan the QR code shown on the "
+        "computer running DrishtiAI, or open the full link it prints.", status_code=403)
 
 
 class DescribeRequest(BaseModel):

@@ -39,6 +39,9 @@ HOST = _env("DRISHTI_HOST", "127.0.0.1")
 PORT = _env("DRISHTI_PORT", 8000, int)
 MAX_IMAGE_BYTES = _env("DRISHTI_MAX_IMAGE_BYTES", 4 * 1024 * 1024, int)
 MAX_TARGET_CHARS = 80
+# Phone mode sets this so only a device that was given the key (by QR code) can use the
+# app. Empty means no check, which is only safe while listening on loopback.
+ACCESS_KEY = ""
 
 # Automatic monitoring (experimental). The browser shrinks each frame to 16x16 grey
 # pixels; the threshold is the mean pixel difference (0-255) from the last described frame.

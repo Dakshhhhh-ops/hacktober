@@ -4,6 +4,7 @@
     python -m drishti --phone    # also reachable from a phone on the same network, over HTTPS
 """
 import argparse
+import secrets
 import shutil
 import socket
 import subprocess
@@ -62,6 +63,34 @@ def ensure_certificate(ip: str) -> tuple[Path, Path]:
     return key, cert
 
 
+def access_key() -> str:
+    """The phone-mode access key, kept between runs so a phone that has it keeps working."""
+    path = CERT_DIR / "access-key.txt"
+    if path.exists() and path.read_text(encoding="utf-8").strip():
+        return path.read_text(encoding="utf-8").strip()
+    CERT_DIR.mkdir(exist_ok=True)
+    key = secrets.token_urlsafe(16)
+    path.write_text(key, encoding="utf-8")
+    return key
+
+
+def show_qr(url: str) -> None:
+    """Print the link as a QR code and save it as an image. Optional: needs segno."""
+    try:
+        import segno
+    except ImportError:
+        print("  (Install segno to get a QR code: pip install segno)")
+        return
+    qr = segno.make(url, error="m")
+    image = CERT_DIR / "phone-link.png"
+    qr.save(image, scale=8, border=4)
+    try:
+        qr.terminal(compact=True)
+    except UnicodeEncodeError:  # a console that cannot draw block characters
+        pass
+    print(f"  The QR code is also saved as {image}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Start DrishtiAI.")
     parser.add_argument("--phone", action="store_true",
@@ -85,15 +114,19 @@ def main() -> None:
 
     ip, port = lan_ip(), args.port or PHONE_PORT
     key, cert = ensure_certificate(ip)
+    config.ACCESS_KEY = access_key()
+    link = f"https://{ip}:{port}/?key={config.ACCESS_KEY}"
     print()
     print("PHONE MODE: the model still runs on this computer; the phone is the camera and speaker.")
     print("  1. Put the phone on the same network as this computer (the phone's own hotspot works).")
-    print(f"  2. On the phone, open:  https://{ip}:{port}")
+    print("  2. Scan this QR code with the phone's camera, or open this link on the phone:")
+    print(f"     {link}")
+    show_qr(link)
     print("  3. The browser warns that the certificate is not trusted, because it was made on")
     print("     this computer. Choose Advanced, then Proceed. Then allow the camera.")
     print("  If the page does not load, allow Python through the Windows firewall when asked.")
-    print("  Anyone on this network can reach the page while phone mode is running, so prefer")
-    print("  a private hotspot to public Wi-Fi, and stop it with Ctrl+C when you are done.")
+    print("  Only a device that opened this link can use the app; the phone remembers it for")
+    print("  30 days. Keep the link private. To make a new one, delete certs/access-key.txt.")
     print()
     uvicorn.run("drishti.server:app", host="0.0.0.0", port=port, log_level="warning",
                 ssl_keyfile=str(key), ssl_certfile=str(cert))

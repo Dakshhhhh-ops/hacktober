@@ -232,7 +232,8 @@ speaker. Nothing goes to the internet.
 
 1. Put the phone and the computer on the same network. The phone's own hotspot works, and
    it does not need mobile data.
-2. On the phone, open the `https://...:8443` address the command prints.
+2. Scan the QR code the command prints with the phone's camera, or open the link it prints.
+   The link contains a secret key; the QR code is also saved as `certs/phone-link.png`.
 3. The browser warns that the certificate is not trusted. That is expected: phone browsers
    only allow the camera over HTTPS, so the command makes its own certificate on your
    computer. Choose Advanced (or Show Details), then proceed to the site.
@@ -244,9 +245,11 @@ speaker. Nothing goes to the internet.
 The first-time setup (opening the address and accepting the certificate and permissions)
 needs a sighted helper or a screen reader. After that the phone remembers the permissions.
 
-Phone mode listens on the whole local network with no login, so anyone on that network
-can open the page while it is running. Prefer a private hotspot to public Wi-Fi and stop
-it with Ctrl+C afterwards. It needs `openssl`, which Git for Windows includes. If the page
+Phone mode listens on the whole local network, but only a device that opened the link
+with the key can use it; anything else gets "403 Forbidden". The phone keeps the key in a
+cookie for 30 days, and the key stays the same between runs, so the phone does not need
+to scan again. To revoke it, delete `certs/access-key.txt`. A private hotspot is still
+better than public Wi-Fi. It needs `openssl`, which Git for Windows includes. If the page
 does not load, allow Python through the firewall when Windows asks.
 
 ## 13. Keyboard shortcuts

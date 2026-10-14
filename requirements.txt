@@ -9,3 +9,5 @@ piper-tts>=1.2
 # present; Vosk is the smaller, weaker fallback.
 faster-whisper>=1.0
 vosk>=0.3.45
+# Optional: prints a QR code in phone mode so the phone can scan the link.
+segno>=1.6
