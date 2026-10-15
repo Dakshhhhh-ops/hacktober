@@ -61,6 +61,9 @@ class DescribeRequest(BaseModel):
     target: str = Field(default="", max_length=config.MAX_TARGET_CHARS)
     auto: bool = False  # true when the page sent the frame by itself, not on a key press
     blurry: bool = False  # the page measured the frame as blurred (web/quality.js)
+    # Walk mode's check for the ground: only hazards the object detector cannot see
+    # (holes, drains, steps, water) are returned, and nothing else is spoken.
+    walk: bool = False
 
 
 class RenderRequest(BaseModel):
@@ -146,6 +149,11 @@ def describe(request: DescribeRequest):
         result = vlm.describe(image, request.mode, request.lang, request.target)
     except vlm.VLMError as err:
         return _error(request, 503, str(err), err.fix, started)
+    if request.walk:
+        # People, vehicles and animals come from the detector several times a second.
+        ground = [h for h in result.scene.hazards if not detector.handles(h.what)]
+        result.scene = result.scene.model_copy(update={"hazards": ground, "objects": [],
+                                                       "text": [], "summary": ""})
 
     hazards, rest = build_speech(result.scene, request.mode, request.lang, request.target,
                                  result.find_result, fallback=result.status == "fallback",

@@ -152,6 +152,21 @@ await check("live Find guides to a bicycle", fakeCamera("eval/images/sidewalk_ob
 });
 
 if (process.argv.includes("--with-model")) {
+  await check("walk mode warns about an open drain from its ground check", fakeCamera(
+    "eval/heldout/images/manhole_delhi.jpg", "drain"), async (page) => {
+    await page.key("w");
+    const ground = () => page.calls.some((c) => c.path === "/api/describe" && c.body.walk === true);
+    for (let i = 0; i < 60 && !(ground() && page.spoken().some((s) => /Careful/.test(s))); i++) await sleep(1000);
+    const problems = [];
+    if (!ground()) problems.push("walk mode never asked the vision model about the ground");
+    // No person, vehicle or animal in this photo, so any warning came from the ground check
+    // (it has said "open drain", "hole" and "broken concrete slab below" for it).
+    if (!page.spoken().some((s) => /^Careful: /.test(s))) {
+      problems.push(`no ground warning; said ${JSON.stringify(page.spoken())}`);
+    }
+    return problems;
+  });
+
   await check("a blurred frame is described, with a warning that it is blurred", fakeCamera(
     "eval/heldout/images/cows_road_delhi.jpg", "blurred", "--blur"), async (page) => {
     await page.key(" ", "Space");

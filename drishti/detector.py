@@ -267,6 +267,11 @@ def _mentions(phrase: str, name: str) -> bool:
     return any(w in (s, s + "s", s + "es") for w in words for s in SAME_THING[name])
 
 
+def handles(phrase: str) -> bool:
+    """Is this a kind of thing walk mode's detector already warns about?"""
+    return any(_mentions(phrase, kind) for kind in SAME_THING)
+
+
 def missing_from(model_hazards: list[Hazard], detected: list[Hazard]) -> list[Hazard]:
     """Detected hazards the vision model did not mention at all."""
     return [h for h in detected if not any(_mentions(m.what, h.what) for m in model_hazards)]

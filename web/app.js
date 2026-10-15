@@ -14,11 +14,11 @@ const TEXT = {
     findLabel: "What are you looking for?", describe: "Describe now", stop: "Stop speech",
     auto: "Auto-monitor", volume: "Volume", warning: "Warning", live: "Live",
     walk: "Walk mode",
-    walkOn: "Walk mode on. I will warn about people, vehicles and animals close to you.",
+    walkOn: "Walk mode on. I will warn about people, vehicles and animals close to you, and look at the ground every few seconds.",
     walkOff: "Walk mode off.",
     walkBroken: "Walk mode is not working at the moment. Check the computer running DrishtiAI.",
     walkUnavailable: "Walk mode needs the object detector, which is not installed.",
-    walkNote: "Walk mode checks a few times a second for people, vehicles and animals. It cannot see steps, holes or open drains: keep using your cane.",
+    walkNote: "Walk mode checks a few times a second for people, vehicles and animals, and every few seconds for holes, drains, steps and water. The ground check is slower and can miss things: keep using your cane.",
     seen: "Also seen", textRead: "Text read", findAnswer: "Search result", scene: "Scene",
     moneyAnswer: "Money seen",
     raw: "Model output (JSON)", languageHint: "switches language",
@@ -63,11 +63,11 @@ const TEXT = {
     findLabel: "आप क्या खोज रहे हैं?", describe: "अभी बताओ", stop: "आवाज़ रोको",
     auto: "ऑटो-निगरानी", volume: "आवाज़", warning: "चेतावनी", live: "लाइव",
     walk: "चलने का मोड",
-    walkOn: "चलने का मोड चालू। पास आने वाले लोगों, गाड़ियों और जानवरों के बारे में बताऊँगा।",
+    walkOn: "चलने का मोड चालू। पास आने वाले लोगों, गाड़ियों और जानवरों के बारे में बताऊँगा, और हर कुछ सेकंड में ज़मीन देखूँगा।",
     walkOff: "चलने का मोड बंद।",
     walkBroken: "चलने का मोड अभी काम नहीं कर रहा। DrishtiAI वाला कंप्यूटर देखें।",
     walkUnavailable: "चलने के मोड के लिए ऑब्जेक्ट डिटेक्टर चाहिए, जो इंस्टॉल नहीं है।",
-    walkNote: "चलने का मोड हर सेकंड कुछ बार लोगों, गाड़ियों और जानवरों को देखता है। यह सीढ़ियाँ, गड्ढे या खुली नालियाँ नहीं देख सकता: छड़ी का इस्तेमाल करते रहें।",
+    walkNote: "चलने का मोड हर सेकंड कुछ बार लोगों, गाड़ियों और जानवरों को, और हर कुछ सेकंड में गड्ढे, नालियाँ, सीढ़ियाँ और पानी देखता है। ज़मीन की जाँच धीमी है और चीज़ें छूट सकती हैं: छड़ी का इस्तेमाल करते रहें।",
     seen: "यह भी दिखा", textRead: "पढ़ा गया पाठ", findAnswer: "खोज का नतीजा", scene: "दृश्य",
     moneyAnswer: "दिखे हुए पैसे",
     raw: "मॉडल का उत्तर (JSON)", languageHint: "से भाषा बदलती है",
@@ -127,6 +127,8 @@ const state = {
   walk: false,          // walk mode: fast object-detector warnings
   search: null,         // live Find in progress: { target, timer, lastKey, ... }
   walkBusy: false,      // a walk-mode check is in flight
+  walkGroundBusy: false, // walk mode's ground check (vision model) is in flight
+  walkGroundAt: 0,
   walkSaid: new Map(),  // warning sentence -> when it was last actually spoken
   walkTrouble: { since: 0, lastSaid: -Infinity },  // walk checks failing (or too dark) since
   hazardSpeaking: false, // a warning is being spoken: nothing else may cut it off
@@ -841,6 +843,7 @@ async function toggleWalk() {
 }
 
 const WALK_REPEAT_MS = 6000;       // the same warning is not said again sooner
+const WALK_GROUND_MS = 3000;       // how often the vision model checks the ground
 const WALK_TROUBLE_MS = 3000;      // say that walk mode cannot see after this long
 const WALK_TROUBLE_REPEAT_MS = 15000;
 
@@ -889,6 +892,39 @@ async function walkTick() {
   for (const sentence of fresh) state.walkSaid.set(sentence, now);
   vibrate([250, 120, 250]);
   stopSpeech(false);  // a warning matters more than a description or guidance
+  speak({ lang: data.lang, speech: { hazards: fresh, rest: [] } });
+}
+
+// The detector cannot see holes, drains, steps or water. Every few seconds the vision
+// model looks at the ground too; only its warnings are spoken, with the same rules as the
+// detector's (nothing repeated within a few seconds, a warning never cut off).
+async function walkGroundTick() {
+  if (!state.walk || state.walkGroundBusy || state.busy || !cameraReady() || document.hidden) return;
+  if (performance.now() - state.walkGroundAt < WALK_GROUND_MS) return;
+  const quality = frameQuality();
+  if (quality === "dark" || quality === "uniform") return;  // walkTick says so already
+  state.walkGroundBusy = true;
+  state.walkGroundAt = performance.now();
+  let data = null;
+  try {
+    data = await postJson("/api/describe", { image: captureFrame(), mode: "surroundings",
+                                             lang: state.lang, walk: true });
+  } catch (err) {
+    data = null;
+  }
+  state.walkGroundBusy = false;
+  state.walkGroundAt = performance.now();
+  if (!state.walk || !data || data.status !== "ok") return;
+  const near = data.hazards.filter((card) => card.distance !== "far");
+  const now = performance.now();
+  const fresh = near.map((card) => card.sentence)
+    .filter((s) => !(now - (state.walkSaid.get(s) ?? -Infinity) < WALK_REPEAT_MS));
+  if (fresh.length === 0 || state.hazardSpeaking) return;
+  for (const sentence of fresh) state.walkSaid.set(sentence, now);
+  els.hazardList.replaceChildren(...near.map(hazardCard));
+  els.hazards.hidden = false;
+  vibrate([250, 120, 250]);
+  stopSpeech(false);
   speak({ lang: data.lang, speech: { hazards: fresh, rest: [] } });
 }
 
@@ -1002,3 +1038,4 @@ checkHealth();
 startCamera();
 setInterval(autoTick, 500);
 setInterval(walkTick, 350);
+setInterval(walkGroundTick, 500);

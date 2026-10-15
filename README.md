@@ -212,8 +212,18 @@ What it can and cannot do:
 - It knows people, bicycles, motorbikes, vehicles and animals. It says "vehicle" and
   "animal" on purpose: it has never seen an auto-rickshaw (it calls one a truck or a bus)
   and it called a cow seen close up a dog.
-- It **cannot** see steps, potholes, open drains or kerbs. Those still need the
-  Surroundings mode, and a cane.
+- The detector **cannot** see steps, potholes, open drains or kerbs. So every 3 seconds
+  walk mode also asks the vision-language model for a Surroundings answer and speaks only
+  its ground warnings (people, vehicles and animals are left to the detector, so nothing
+  is said twice). On the held-out photos this found all 6 ground hazards (potholes in
+  Kolkata and Bihar, a broken road and an open drain in Delhi, a trench, railway tracks)
+  and gave a false ground warning on 1 of 9 other scenes (`python eval/ground_eval.py
+  --set heldout`). It takes about 2 to 3 s, so a hazard can be a few steps closer by the
+  time it is spoken. Keep using a cane.
+- A separate, shorter "ground only" prompt was tried first. Its best version was faster
+  (0.9 s) but found fewer ground hazards on the tuning photos (9 of 12, against 11 of 12
+  for the Surroundings answer), and earlier versions copied the example words in the
+  prompt ("pothole", "steps down") onto empty corridors. It was dropped.
 - Distance is a guess from how much of the picture an object fills.
 - Adding its detections to the Surroundings answers was measured and did not help: on
   both evaluation sets it found nothing the vision-language model had missed, and it

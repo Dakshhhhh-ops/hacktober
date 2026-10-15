@@ -212,3 +212,27 @@ class InstallableTests(unittest.TestCase):
     def test_the_page_asks_for_the_manifest_with_the_access_cookie(self):
         page = (server.config.WEB_DIR / "index.html").read_text(encoding="utf-8")
         self.assertIn('rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials"', page)
+
+
+class WalkGroundCheckTests(unittest.TestCase):
+    def test_walk_mode_keeps_only_what_the_detector_cannot_see(self):
+        scene = Scene.model_validate_json(json.dumps({
+            "hazards": [{"what": "stray cow", "where": "ahead", "distance": "near"},
+                        {"what": "open drain", "where": "left", "distance": "near"},
+                        {"what": "two men", "where": "right", "distance": "mid"}],
+            "objects": [{"what": "road", "where": "ahead"}], "text": ["KMC"], "summary": "A street.",
+        }))
+        server.repeats = server.RepeatFilter(20)
+        with mock.patch.object(vlm, "describe", return_value=result(scene=scene)):
+            response = server.describe(server.DescribeRequest(image=JPEG, walk=True))
+        self.assertEqual([c.what for c in response.hazards], ["open drain"])
+        self.assertEqual(response.speech.hazards, ["Careful: open drain on the left, near."])
+
+    def test_without_walk_everything_is_kept(self):
+        scene = Scene.model_validate_json(json.dumps({
+            "hazards": [{"what": "stray cow", "where": "ahead", "distance": "near"}],
+            "objects": [], "text": [], "summary": "A street."}))
+        server.repeats = server.RepeatFilter(20)
+        with mock.patch.object(vlm, "describe", return_value=result(scene=scene)):
+            response = server.describe(server.DescribeRequest(image=JPEG))
+        self.assertEqual(response.speech.hazards, ["Careful: stray cow ahead, near."])
