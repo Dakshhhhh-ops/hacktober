@@ -29,3 +29,10 @@ synthetic_small_text.png,n/a,Keep this door closed
 synthetic_blurred.png,n/a,PUSH TO OPEN
 synthetic_tilted.png,n/a,NO ENTRY
 synthetic_low_contrast.png,n/a,Staff Only
+flooded_handpump_chennai.jpg,flood|flooded street|flooded road|water|waterlogging|standing water|puddle;hand pump|pump|water pump|pipe|pole|post|obstacle;?curb|kerb|step|edge|footpath edge|sidewalk edge|ledge;?bicycle|bike|cycle|motorcycle|scooter|cover|tarp|vehicle|tree|wall,
+flooded_street_dibrugarh.jpg,water|flood|flooded street|flooded road|waterlogging|standing water|puddle;pillar|post|block|concrete block|concrete post|column|obstacle|pole|bollard;?person|people|man|pedestrian|pedestrians|crowd;?bicycle|cyclist|cycle|rickshaw|motorcycle|scooter|vehicle|vehicles|traffic;?pole|traffic light|signal|bin|dustbin|box;?wet|slippery|wet footpath|kerb|curb|edge|step,
+flooded_street_mumbai.jpg,vehicle|car|suv|jeep|van|truck|traffic|vehicles;water|flood|flooded street|flooded road|waterlogging|standing water;?bus|buses|truck|vehicle;?person|people|man|pedestrian|pedestrians|cyclist|bicycle|umbrella;?pole|sign|post|signpost;?curb|kerb|edge|divider|median|step|slippery|wet,
+ghat_steps_varanasi.jpg,steps|stairs|staircase|step|stairway|ghat;person|people|man|men|woman|pedestrian|sadhu;?dog|animal;?bag|bags|cloth|clothes|bundle|belongings|bottle|items;?stall|stand|cart|rack|shop|table;?wall|platform|ledge|edge|step,
+station_stairs_ernakulam.jpg,stairs|steps|staircase|stairway|steps down|stairs down;person|people|man|traveller|passenger|pedestrian;?suitcase|luggage|bag|trolley bag|bags;?railway track|track|tracks|rails|platform edge|edge|train;?pillar|pole|column|railing|handrail|beam|sign|board;?people|crowd|passengers|bench|seat,
+promenade_marine_drive.jpg,?person|people|man|pedestrian|pedestrians;?planter|plants|bush|pole|sign|post;?road|vehicle|car|motorcycle|scooter|traffic;?wall|sea|water|edge,
+covered_walkway_rajghat.jpg,?pillar|pillars|pole|poles|column|columns|post;?bin|bins|dustbin|trash can|garbage bin;?railing|fence|edge|step|steps|kerb|curb|ramp;?bus|car|vehicle|vehicles|parked car|motorcycle;?person|people,
