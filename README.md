@@ -202,10 +202,12 @@ near." It warns about anything near, and about things at mid distance straight a
 does not repeat the same warning within 6 seconds. Warnings are synthesised when the
 server starts and kept, so they play at once, with no synthesis at all.
 
-On the evaluation photos (`python eval/walk_eval.py`) it warned about all 5 labelled
-people, vehicles and animals (the bicycle on a pavement, cows on three Indian streets,
-auto-rickshaws in Ahmedabad) and about none of the 9 clear scenes, in a median of 14 ms.
-Five objects is a very small sample: it shows the idea works, not how often it fails.
+On the evaluation photos (`python eval/walk_eval.py`) it warned about 15 of 18 labelled
+people, vehicles and animals (cows and dogs on Indian streets and footpaths, people on
+station stairs and ghats, an SUV in a flooded Mumbai street) and about none of the 14
+clear scenes, in a median of 15 ms. It missed a cyclist seen from behind in a flooded
+Chennai street, an auto-rickshaw further down a muddy lane, and a scooter coming towards
+the camera in Delhi. 18 objects is still a small sample.
 
 What it can and cannot do:
 
@@ -215,11 +217,13 @@ What it can and cannot do:
 - The detector **cannot** see steps, potholes, open drains or kerbs. So every 3 seconds
   walk mode also asks the vision-language model for a Surroundings answer and speaks only
   its ground warnings (people, vehicles and animals are left to the detector, so nothing
-  is said twice). On the held-out photos this found all 6 ground hazards (potholes in
-  Kolkata and Bihar, a broken road and an open drain in Delhi, a trench, railway tracks)
-  and gave a false ground warning on 1 of 9 other scenes (`python eval/ground_eval.py
-  --set heldout`). It takes about 2 to 3 s, so a hazard can be a few steps closer by the
-  time it is spoken. Keep using a cane.
+  is said twice). On the held-out photos this found 18 of 21 ground hazards (potholes,
+  open drains, a trench, flooded streets, stairs, railway tracks) and gave a false ground
+  warning on 4 of 18 other scenes, such as "stairs" in living rooms and an "open door" on a
+  footpath (`python eval/ground_eval.py --set heldout`). It missed the wet stones round a
+  raised manhole, and two more misses were wording: "puncture in the road" for a pothole and
+  "broken concrete" for a broken footpath edge. It takes about 2 to 3 s, so a hazard can be
+  a few steps closer by the time it is spoken. Keep using a cane.
 - A separate, shorter "ground only" prompt was tried first. Its best version was faster
   (0.9 s) but found fewer ground hazards on the tuning photos (9 of 12, against 11 of 12
   for the Surroundings answer), and earlier versions copied the example words in the
@@ -354,7 +358,7 @@ There are three image sets. The label format, matching rules and metric definiti
 | Set | Images | What it is for |
 | --- | --- | --- |
 | Tuning (`eval/images`) | 30 | 21 Wikimedia Commons photos and 9 rendered text images. The prompts were written against these, so their numbers are optimistic. |
-| **Held-out** (`eval/heldout`) | 17 | New Commons photos from India that were never used for tuning: potholes, open drains, cattle and auto-rickshaws on the road, platforms, Hindi station boards, and 5 scenes with no hazard. **The fairer estimate.** |
+| **Held-out** (`eval/heldout`) | 39 | Commons photos from India that were never used for tuning: potholes, open drains, flooded streets, a raised manhole, cattle, dogs and auto-rickshaws on roads and footpaths, stairs at stations and ghats, Hindi station boards, and 10 scenes with no hazard. **The fairer estimate.** |
 | Currency (`eval/currency`) | 18 | Indian notes and coins, for Money mode. |
 
 <!-- EVAL-RESULTS-START -->
@@ -362,20 +366,19 @@ There are three image sets. The label format, matching rules and metric definiti
 
 | `qwen3-vl:2b-instruct` | Tuning | **Held-out** | Currency |
 | --- | --- | --- | --- |
-| Hazards found (recall) | 93% (14 of 15) | **90% (9 of 10)** | |
-| **Missed hazards** | **1** | **1** | |
-| Clear scenes that still got a warning | 2 of 4 | 1 of 5 | |
-| False alarms per image | 0.17 | 0.20 | |
-| Text read correctly | 14 of 15 | 1 of 2 | |
+| Hazards found (recall) | 93% (14 of 15) | **69% (29 of 42)** | |
+| **Missed hazards** | **1** | **13** | |
+| Clear scenes that still got a warning | 2 of 4 | 4 of 10 | |
+| False alarms per image | 0.17 | 0.22 | |
+| Text read correctly | 14 of 15 | 2 of 2 | |
 | Money: denominations exactly right | | | 17 of 18 |
 | **Money: said a value that is not there** | | | **1** |
 | Plain-text fallbacks (no validated JSON) | 0 | 0 | 0 |
-| Median / p95 model latency | 2.9 / 5.4 s | 4.0 / 8.7 s | 1.8 s |
+| Median / p95 model latency | 2.9 / 5.4 s | 2.7 / 3.3 s | 1.8 s |
 
-Missed: uneven paving (tuning) and potholes seen through a rainy bus window (held-out). The
-wrong money value was on a photo of a messy pile of ₹100 and ₹2000 notes, where it also said
-₹200 and ₹500. Full tables: [tuning](eval/results.md),
-[held-out](eval/compare/qwen3-vl-2b-instruct/heldout/results.md),
+Missed on the tuning set: uneven paving. The wrong money value was on a photo of a messy pile
+of ₹100 and ₹2000 notes, where it also said ₹200 and ₹500. Full tables:
+[tuning](eval/results.md), [held-out](eval/heldout/results.md),
 [currency](eval/compare/qwen3-vl-2b-instruct/currency/results.md).
 
 ### What the held-out set found
@@ -392,6 +395,27 @@ limit, and outside Read mode only four short lines of text are allowed (Money mo
 none). Held-out recall went from 70% to 90% with no fallbacks; on the street with cows the
 answer went from a 15 to 18 s fallback with no warning to a correct warning in about 3.5 s.
 
+### 22 more photos, 15 October 2026
+
+Ten labelled hazards were too few to trust a 90% figure, so 22 more Commons photos from
+India were added: potholes, flooded streets, a raised manhole, a hammock strung across a
+footpath, cows and dogs, stairs at stations and ghats, and 5 more clear footpaths and roads.
+They were labelled by looking at each photo before the model was run on it, and the prompts
+were not changed afterwards. Recall on the whole held-out set fell from 90% to **69%**:
+
+- **People on stairs were left out.** On the ghat and station stairs it said "stairs" but
+  not the people sitting on them or walking down in front.
+- **Obstacles in flood water were missed.** It said "flooded street" but not the hand pump,
+  the concrete post or the SUV right beside the camera.
+- **"Open door" came back.** It warned about an open door on 4 outdoor scenes with no door,
+  the prompt-example copying that the first tuning run had (see the tuning section below).
+- Two results are about wording, not sight: a pothole called a "puncture in the road"
+  counts as a miss, and a "broken sidewalk" on a clear footpath counts as a false warning,
+  because word matching does not link them to the labels.
+
+Earlier comparisons below (picture size, other models) were measured on the first 17
+photos and have not been re-run.
+
 ### Picture size
 
 The page sends the model frames at most 768 px on the longer side. Would smaller frames be
@@ -399,9 +423,9 @@ faster? Measured with the GPU to itself (`run_eval.py --max-side`):
 
 | | 768 px (what the page sends) | 512 px |
 | --- | --- | --- |
-| Held-out: hazards found | **10 of 10** | 8 of 10 |
-| Held-out: boards read | 2 of 2 | 1 of 2 |
-| Held-out: median latency | 2.3 s | 2.4 s |
+| Held-out (first 17 photos): hazards found | **10 of 10** | 8 of 10 |
+| Held-out (first 17 photos): boards read | 2 of 2 | 1 of 2 |
+| Held-out (first 17 photos): median latency | 2.3 s | 2.4 s |
 | Tuning: hazards found | 14 of 15 | 14 of 15 |
 | Tuning: median latency | 1.8 s | 1.7 s |
 
@@ -410,7 +434,8 @@ Delhi, the low, on-the-ground hazards that need detail. Ollama gives this model 
 1024 image tokens whatever the picture size, so a smaller frame costs about the same. The
 page stays at 768 px.
 
-The held-out run at 768 px found all 10 hazards, where the run in the table above found 9.
+The held-out run at 768 px found all 10 hazards, where the earlier full-size run on the same
+17 photos found 9.
 The same model on the same photos does not always answer the same way, even with sampling
 switched off, so differences of one image between runs are noise.
 
@@ -419,7 +444,7 @@ switched off, so differences of one image between runs are noise.
 The same code, prompts and images were run with two other models that fit a 6 GB GPU
 ([full table](eval/compare/README.md)):
 
-| Held-out set | Hazards found | Clear scenes warned | Median latency |
+| Held-out set (first 17 photos) | Hazards found | Clear scenes warned | Median latency |
 | --- | --- | --- | --- |
 | **`qwen3-vl:2b-instruct`** (default) | **90%** | 1 of 5 | 4.0 s |
 | `qwen3-vl:4b-instruct` | 10% | 0 of 5 | 3.1 s |
@@ -433,8 +458,8 @@ above were added.
 
 ### How to read these numbers
 
-- **They are small samples.** 10 labelled hazards and 5 clear scenes in the held-out set
-  are enough to find failures like the one above, not to estimate a real-world rate.
+- **They are small samples.** 42 labelled hazards and 10 clear scenes in the held-out set
+  are enough to find failures like the ones above, not to estimate a real-world rate.
 - The photographs were taken by sighted people, mostly in daylight, and are sharper than
   what a phone held by a walking person will see.
 - Latency was measured on an RTX 4050 Laptop GPU (6 GB) with the model already loaded, on a
@@ -543,8 +568,9 @@ inspected.
 
 <!-- LIMITATIONS-MEASURED -->
 - **It can invent or miss things.** A 2-billion-parameter model hallucinates. On photos
-  it was never tuned on it found 9 of 10 hazards, missed potholes seen through a rainy
-  window, and warned on 1 of 5 clear scenes. See section 14.
+  it was never tuned on it found 29 of 42 hazards (69%), often left out people on stairs
+  and obstacles standing in flood water, and warned on 4 of 10 clear scenes, sometimes
+  about an "open door" that was not there. See section 14.
 - **Money mode can be wrong.** It got 17 of 18 test images right, but on a messy pile of
   notes it named values that were not there. Count important amounts another way too.
   It does not check whether a note is genuine.
