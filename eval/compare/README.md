@@ -17,8 +17,9 @@ is the median time inside the model on an RTX 4050 Laptop GPU (6 GB), model alre
 
 Notes:
 
-- The `heldout` rows are the first 17 held-out photos, before 22 more were added on
-  15 October 2026. The default model's result on all 39 is in
+- The `tuning` and `heldout` rows are the first 30 tuning images and the first 17
+  held-out photos, before both sets changed on 15 October 2026. The default model's
+  results on the current sets are in [../results.md](../results.md) and
   [../heldout/results.md](../heldout/results.md).
 
 - The `qwen3-vl:2b-instruct` rows were run after the JSON length limits were added

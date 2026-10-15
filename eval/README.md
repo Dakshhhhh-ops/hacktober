@@ -16,15 +16,17 @@ Ollama must be running with the configured model. Nothing here is mocked.
 
 | Set | Run it with |
 | --- | --- |
-| Tuning, 30 images | `python eval/run_eval.py` |
-| Held-out, 39 images | `python eval/run_eval.py --images eval/heldout/images --labels eval/heldout/labels.csv --out eval/heldout` |
+| Tuning, 37 images | `python eval/run_eval.py` |
+| Held-out, 52 images | `python eval/run_eval.py --images eval/heldout/images --labels eval/heldout/labels.csv --out eval/heldout` |
 | Currency, 18 images | `python eval/run_eval.py --images eval/currency/images --labels eval/currency/labels.csv --out eval/currency` |
 
 The held-out photos were chosen and labelled after the prompts were written, and must not
 be used to tune them: once a prompt is changed because of a held-out image, that image
-belongs in the tuning set. 22 photos were added on 15 October 2026 (the last 22 rows of
-`heldout/labels.csv`), labelled by looking at each one before the model was run on them.
-Labels may still be corrected when they are wrong, openly:
+belongs in the tuning set. On 15 October 2026, 22 photos and then 20 more were added,
+each labelled by looking at it before the model was run on it, and 7 of the first 22
+(people on stairs, obstacles in flood water, outdoor scenes with an invented open door)
+moved to the tuning set because prompt changes were tried against them. Labels may still
+be corrected when they are wrong, openly:
 
 - 15 October 2026, `station_board_hapur.jpg`: the small line "H.T. FROM M.S.L. 213.81M"
   had been left out as too small to read, but it is readable and the model read it
@@ -103,14 +105,14 @@ retry if one happened. The median and the 95th percentile (nearest rank) are rep
 
 ## The image set
 
-30 images, fixed and committed to this repository:
+37 images, fixed and committed to this repository:
 
-- **21 photographs from Wikimedia Commons**, fetched by `fetch_commons.py` at about 800 px
-  wide. They were chosen by searching for common walking hazards (stairs, wet floors,
-  potholes, an open manhole, barriers, obstructions) plus clear corridors and signs. Each
-  keeps its own licence; authors and licences are listed in [SOURCES.md](SOURCES.md).
-  14 show a required hazard, 4 are hazard-free scenes, and 3 are signs used only for
-  reading.
+- **28 photographs from Wikimedia Commons**, fetched by `fetch_commons.py` at about 800 px
+  wide. 21 were chosen by searching for common walking hazards (stairs, wet floors,
+  potholes, an open manhole, barriers, obstructions) plus clear corridors and signs; 7
+  Indian street, stair and flood scenes came from the held-out set. Each keeps its own
+  licence; authors and licences are listed in [SOURCES.md](SOURCES.md). 19 show a required
+  hazard, 6 are hazard-free scenes, and 3 are signs used only for reading.
 - **9 `synthetic_*.png` images** are rendered text, not photographs, made by
   `make_synthetic.py`. They are a fixed reading test with some deliberately hard cases
   (small, blurred, tilted, low contrast) and are marked `n/a` for hazards.

@@ -1,20 +1,20 @@
 {
   "model": "qwen3-vl:2b-instruct",
   "summary": {
-    "images": 30,
-    "images_scored_for_hazards": 18,
+    "images": 37,
+    "images_scored_for_hazards": 25,
     "failed_inferences": 0,
     "fallbacks": 0,
-    "hazards_labelled": 15,
-    "hazards_detected": 14,
-    "hazards_missed": 1,
-    "hazard_recall": 0.933,
-    "hazards_predicted": 26,
-    "false_alarms": 3,
-    "false_alarms_per_image": 0.17,
-    "false_alarm_rate": 0.115,
-    "hazard_free_images": 4,
-    "hazard_free_images_with_alarm": 2,
+    "hazards_labelled": 25,
+    "hazards_detected": 19,
+    "hazards_missed": 6,
+    "hazard_recall": 0.76,
+    "hazards_predicted": 37,
+    "false_alarms": 5,
+    "false_alarms_per_image": 0.2,
+    "false_alarm_rate": 0.135,
+    "hazard_free_images": 6,
+    "hazard_free_images_with_alarm": 4,
     "text_images": 15,
     "text_mean_similarity": 0.975,
     "text_read_correctly": 14,
@@ -22,9 +22,9 @@
     "money_correct": 0,
     "money_wrong_value": 0,
     "money_nothing_seen": 0,
-    "inferences_timed": 33,
-    "latency_median_ms": 2948,
-    "latency_p95_ms": 5369
+    "inferences_timed": 40,
+    "latency_median_ms": 1960,
+    "latency_p95_ms": 2872
   },
   "images": [
     {
@@ -46,7 +46,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2635
+        2441
       ],
       "status": "ok",
       "summary": "Two escalators face each other in a subway station, with a central structure in the middle."
@@ -74,7 +74,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2872
+        2294
       ],
       "status": "ok",
       "summary": "A manhole and traffic cone are on the road, with a white car and gold SUV nearby."
@@ -100,7 +100,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2948
+        2238
       ],
       "status": "ok",
       "summary": "Red barriers block the path ahead, with a person walking nearby and a building on the right."
@@ -126,7 +126,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3143
+        2005
       ],
       "status": "ok",
       "summary": "A large pothole is in the road, a glove is on the pavement, and a white crosswalk is ahead."
@@ -152,7 +152,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2444
+        1645
       ],
       "status": "ok",
       "summary": "A large hole in the road ahead, with a white barricade on the right"
@@ -179,7 +179,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2750
+        1953
       ],
       "status": "ok",
       "summary": "Wet floor, people, doors, and signs in a station"
@@ -207,7 +207,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3620
+        2545
       ],
       "status": "ok",
       "summary": "Bicycles parked in a row on a sidewalk near a road with a signpost."
@@ -233,7 +233,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2812
+        1931
       ],
       "status": "ok",
       "summary": "A staircase with a yellow edge and tactile paving, with a potential hazard of tripping on the steps."
@@ -262,7 +262,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3627
+        2692
       ],
       "status": "ok",
       "summary": "A stairway with railings leads down to a street with people and a train track nearby."
@@ -289,7 +289,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3239
+        2296
       ],
       "status": "ok",
       "summary": "People are descending stairs to a subway entrance, with a pathway open sign and other pedestrians nearby."
@@ -320,7 +320,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3738
+        2618
       ],
       "status": "ok",
       "summary": "A puddle, leaf, and fence are on the sidewalk near the person."
@@ -346,8 +346,8 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3392,
-        1915
+        2521,
+        1395
       ],
       "status": "ok",
       "summary": "A wet floor hazard is in front, with a caution sign and other objects nearby.",
@@ -380,8 +380,8 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2539,
-        975
+        1803,
+        709
       ],
       "status": "ok",
       "summary": "A yellow wet floor sign is on a wooden floor, indicating a hazard ahead.",
@@ -417,7 +417,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2808
+        1968
       ],
       "status": "ok",
       "summary": "A yellow warning sign and a black bucket on a tiled floor, indicating a wet area."
@@ -444,7 +444,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        4136
+        2914
       ],
       "status": "ok",
       "summary": "A hallway with a door, tiled floor, and a picture, with a hazard of an open door near the right."
@@ -468,7 +468,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        5369
+        1982
       ],
       "status": "ok",
       "summary": "A long hallway with stairs ahead, chairs and tables on the sides, and an EXIT sign above."
@@ -490,8 +490,8 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        6603,
-        1595
+        2439,
+        590
       ],
       "status": "ok",
       "summary": "A hallway with an exit sign, a door, a fire alarm, a camera, and carpeted floor, with a hazard of a door that could block the path.",
@@ -517,7 +517,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        5058
+        1863
       ],
       "status": "ok",
       "summary": "Empty room with a door on the left, a window on the right, and a ceiling above."
@@ -535,7 +535,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3022
+        1079
       ],
       "status": "ok",
       "text_predicted": [
@@ -556,7 +556,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3108
+        1131
       ],
       "status": "ok",
       "text_predicted": [
@@ -577,7 +577,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        4590
+        1819
       ],
       "status": "ok",
       "text_predicted": [
@@ -602,7 +602,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2999
+        1052
       ],
       "status": "ok",
       "text_predicted": [
@@ -623,7 +623,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3790
+        1383
       ],
       "status": "ok",
       "text_predicted": [
@@ -645,7 +645,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        2938
+        1029
       ],
       "status": "ok",
       "text_predicted": [
@@ -666,7 +666,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        3429
+        1125
       ],
       "status": "ok",
       "text_predicted": [
@@ -688,7 +688,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        1709
+        1122
       ],
       "status": "ok",
       "text_predicted": [
@@ -710,7 +710,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        1829
+        1029
       ],
       "status": "ok",
       "text_predicted": [
@@ -731,7 +731,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        1636
+        1015
       ],
       "status": "ok",
       "text_predicted": [
@@ -752,7 +752,7 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        1731
+        1070
       ],
       "status": "ok",
       "text_predicted": [
@@ -773,13 +773,230 @@
       "failed": false,
       "error": "",
       "latencies_ms": [
-        1543
+        1014
       ],
       "status": "ok",
       "text_predicted": [
         "Staff Only"
       ],
       "text_similarity": 1.0
+    },
+    {
+      "image": "flooded_handpump_chennai.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "flood",
+        "hand pump"
+      ],
+      "hazards_optional": [
+        "curb",
+        "bicycle"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "flooded street"
+      ],
+      "detected": [
+        "flood"
+      ],
+      "missed": [
+        "hand pump"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2209
+      ],
+      "status": "ok",
+      "summary": "Flooded street with a pump, bicycle, and tarp-covered object nearby"
+    },
+    {
+      "image": "flooded_street_dibrugarh.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "water",
+        "pillar"
+      ],
+      "hazards_optional": [
+        "person",
+        "bicycle",
+        "pole",
+        "wet"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "flooded street",
+        "bicycle",
+        "person"
+      ],
+      "detected": [
+        "water"
+      ],
+      "missed": [
+        "pillar"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        3024
+      ],
+      "status": "ok",
+      "summary": "Flooded street with people and bicycles, hazards include the flooded area and potential obstacles."
+    },
+    {
+      "image": "flooded_street_mumbai.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "vehicle",
+        "water"
+      ],
+      "hazards_optional": [
+        "bus",
+        "person",
+        "pole",
+        "curb"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "flooded road",
+        "bicycle",
+        "person with umbrella"
+      ],
+      "detected": [
+        "water"
+      ],
+      "missed": [
+        "vehicle"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2872
+      ],
+      "status": "ok",
+      "summary": "Flooded road, people, and vehicles in a rainy street"
+    },
+    {
+      "image": "ghat_steps_varanasi.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "steps",
+        "person"
+      ],
+      "hazards_optional": [
+        "dog",
+        "bag",
+        "stall",
+        "wall"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs"
+      ],
+      "detected": [
+        "steps"
+      ],
+      "missed": [
+        "person"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2349
+      ],
+      "status": "ok",
+      "summary": "A person is on the stairs, with a building and a dog nearby."
+    },
+    {
+      "image": "station_stairs_ernakulam.jpg",
+      "hazards_scored": true,
+      "hazards_true": [
+        "stairs",
+        "person"
+      ],
+      "hazards_optional": [
+        "suitcase",
+        "railway track",
+        "pillar",
+        "people"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "stairs"
+      ],
+      "detected": [
+        "stairs"
+      ],
+      "missed": [
+        "person"
+      ],
+      "false_alarms": [],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2721
+      ],
+      "status": "ok",
+      "summary": "A train station platform with stairs leading down, railway tracks, and people waiting. There is a hazard of stairs and potential trip hazard from the steps."
+    },
+    {
+      "image": "promenade_marine_drive.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "person",
+        "planter",
+        "road",
+        "wall"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "open door"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [
+        "open door"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2401
+      ],
+      "status": "ok",
+      "summary": "A paved walkway with a person, motorcycle, and buildings on the right, and an open door in the mid-ground."
+    },
+    {
+      "image": "covered_walkway_rajghat.jpg",
+      "hazards_scored": true,
+      "hazards_true": [],
+      "hazards_optional": [
+        "pillar",
+        "bin",
+        "railing",
+        "bus",
+        "person"
+      ],
+      "text_true": "",
+      "hazards_predicted": [
+        "open door"
+      ],
+      "detected": [],
+      "missed": [],
+      "false_alarms": [
+        "open door"
+      ],
+      "failed": false,
+      "error": "",
+      "latencies_ms": [
+        2512
+      ],
+      "status": "ok",
+      "summary": "A covered walkway with a bus and car on the left, an open door on the right, and a person walking forward."
     }
   ]
 }

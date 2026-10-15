@@ -202,12 +202,13 @@ near." It warns about anything near, and about things at mid distance straight a
 does not repeat the same warning within 6 seconds. Warnings are synthesised when the
 server starts and kept, so they play at once, with no synthesis at all.
 
-On the evaluation photos (`python eval/walk_eval.py`) it warned about 15 of 18 labelled
+On the evaluation photos (`python eval/walk_eval.py`) it warned about 25 of 30 labelled
 people, vehicles and animals (cows and dogs on Indian streets and footpaths, people on
-station stairs and ghats, an SUV in a flooded Mumbai street) and about none of the 14
-clear scenes, in a median of 15 ms. It missed a cyclist seen from behind in a flooded
-Chennai street, an auto-rickshaw further down a muddy lane, and a scooter coming towards
-the camera in Delhi. 18 objects is still a small sample.
+station and temple stairs and ghats, cars in flooded streets) and about none of the 18
+clear scenes, in a median of 13 ms. It missed a cyclist seen from behind in a flooded
+Chennai street, an auto-rickshaw further down a muddy lane, a scooter coming towards the
+camera in Delhi, a jeep on a hill road and an SUV seen through a car windscreen. 30
+objects is still a small sample.
 
 What it can and cannot do:
 
@@ -217,13 +218,12 @@ What it can and cannot do:
 - The detector **cannot** see steps, potholes, open drains or kerbs. So every 3 seconds
   walk mode also asks the vision-language model for a Surroundings answer and speaks only
   its ground warnings (people, vehicles and animals are left to the detector, so nothing
-  is said twice). On the held-out photos this found 18 of 21 ground hazards (potholes,
+  is said twice). On the held-out photos this found 23 of 29 ground hazards (potholes,
   open drains, a trench, flooded streets, stairs, railway tracks) and gave a false ground
-  warning on 4 of 18 other scenes, such as "stairs" in living rooms and an "open door" on a
-  footpath (`python eval/ground_eval.py --set heldout`). It missed the wet stones round a
-  raised manhole, and two more misses were wording: "puncture in the road" for a pothole and
-  "broken concrete" for a broken footpath edge. It takes about 2 to 3 s, so a hazard can be
-  a few steps closer by the time it is spoken. Keep using a cane.
+  warning on 6 of 24 other scenes, such as "stairs" in living rooms and an "open door" at
+  a street crossing (`python eval/ground_eval.py --set heldout`). Among the misses were the
+  flood water and a fallen power line in a Hyderabad street. It takes about 2 to 3 s, so a
+  hazard can be a few steps closer by the time it is spoken. Keep using a cane.
 - A separate, shorter "ground only" prompt was tried first. Its best version was faster
   (0.9 s) but found fewer ground hazards on the tuning photos (9 of 12, against 11 of 12
   for the Surroundings answer), and earlier versions copied the example words in the
@@ -357,8 +357,8 @@ There are three image sets. The label format, matching rules and metric definiti
 
 | Set | Images | What it is for |
 | --- | --- | --- |
-| Tuning (`eval/images`) | 30 | 21 Wikimedia Commons photos and 9 rendered text images. The prompts were written against these, so their numbers are optimistic. |
-| **Held-out** (`eval/heldout`) | 39 | Commons photos from India that were never used for tuning: potholes, open drains, flooded streets, a raised manhole, cattle, dogs and auto-rickshaws on roads and footpaths, stairs at stations and ghats, Hindi station boards, and 10 scenes with no hazard. **The fairer estimate.** |
+| Tuning (`eval/images`) | 37 | 28 Wikimedia Commons photos and 9 rendered text images. The prompts were written or tested against these, so their numbers are optimistic. |
+| **Held-out** (`eval/heldout`) | 52 | Commons photos from India that were never used for tuning: potholes, open drains, flooded streets, a fallen power line, a raised manhole, cattle, dogs and auto-rickshaws on roads and footpaths, crowded stairs at temples, stations and ghats, Hindi station boards, and 12 scenes with no hazard. **The fairer estimate.** |
 | Currency (`eval/currency`) | 18 | Indian notes and coins, for Money mode. |
 
 <!-- EVAL-RESULTS-START -->
@@ -366,17 +366,18 @@ There are three image sets. The label format, matching rules and metric definiti
 
 | `qwen3-vl:2b-instruct` | Tuning | **Held-out** | Currency |
 | --- | --- | --- | --- |
-| Hazards found (recall) | 93% (14 of 15) | **69% (29 of 42)** | |
-| **Missed hazards** | **1** | **13** | |
-| Clear scenes that still got a warning | 2 of 4 | 4 of 10 | |
-| False alarms per image | 0.17 | 0.22 | |
+| Hazards found (recall) | 76% (19 of 25) | **72% (43 of 60)** | |
+| **Missed hazards** | **6** | **17** | |
+| Clear scenes that still got a warning | 4 of 6 | 3 of 12 | |
+| False alarms per image | 0.20 | 0.20 | |
 | Text read correctly | 14 of 15 | 2 of 2 | |
 | Money: denominations exactly right | | | 17 of 18 |
 | **Money: said a value that is not there** | | | **1** |
 | Plain-text fallbacks (no validated JSON) | 0 | 0 | 0 |
-| Median / p95 model latency | 2.9 / 5.4 s | 2.7 / 3.3 s | 1.8 s |
+| Median / p95 model latency | 2.0 / 2.9 s | 2.5 / 3.3 s | 1.8 s |
 
-Missed on the tuning set: uneven paving. The wrong money value was on a photo of a messy pile
+Missed on the tuning set: uneven paving, and 5 hazards in the photos moved there from the
+held-out set (see below). The wrong money value was on a photo of a messy pile
 of ₹100 and ₹2000 notes, where it also said ₹200 and ₹500. Full tables:
 [tuning](eval/results.md), [held-out](eval/heldout/results.md),
 [currency](eval/compare/qwen3-vl-2b-instruct/currency/results.md).
@@ -395,26 +396,48 @@ limit, and outside Read mode only four short lines of text are allowed (Money mo
 none). Held-out recall went from 70% to 90% with no fallbacks; on the street with cows the
 answer went from a 15 to 18 s fallback with no warning to a correct warning in about 3.5 s.
 
-### 22 more photos, 15 October 2026
+### More photos, 15 October 2026
 
-Ten labelled hazards were too few to trust a 90% figure, so 22 more Commons photos from
-India were added: potholes, flooded streets, a raised manhole, a hammock strung across a
-footpath, cows and dogs, stairs at stations and ghats, and 5 more clear footpaths and roads.
-They were labelled by looking at each photo before the model was run on it, and the prompts
-were not changed afterwards. Recall on the whole held-out set fell from 90% to **69%**:
+Ten labelled hazards were too few to trust a 90% figure, so the held-out set was grown
+from 17 to 52 photos, with every new photo labelled by looking at it before the model was
+run on it. With 22 more photos (potholes, flooded streets, a raised manhole, a hammock
+strung across a footpath, cows and dogs, stairs at stations and ghats, clear footpaths)
+recall fell from 90% to 69%, and three failures stood out:
 
-- **People on stairs were left out.** On the ghat and station stairs it said "stairs" but
-  not the people sitting on them or walking down in front.
+- **People on stairs were left out.** On ghat and station stairs it said "stairs" but not
+  the people sitting on them or walking down in front.
 - **Obstacles in flood water were missed.** It said "flooded street" but not the hand pump,
   the concrete post or the SUV right beside the camera.
-- **"Open door" came back.** It warned about an open door on 4 outdoor scenes with no door,
-  the prompt-example copying that the first tuning run had (see the tuning section below).
-- Two results are about wording, not sight: a pothole called a "puncture in the road"
-  counts as a miss, and a "broken sidewalk" on a clear footpath counts as a false warning,
-  because word matching does not link them to the labels.
+- **"Open door" came back** on outdoor scenes with no door: the prompt-example copying the
+  first tuning run had (see the tuning section below).
+
+To try to fix these fairly, the 7 photos that showed them moved to the tuning set, and 20
+fresh photos of the same kinds (crowded temple and metro stairs, flooded streets in
+Hyderabad and Kerala, clear park paths) were added to the held-out set. The fresh photos
+showed the same weakness before any change: of the 17 hazards now missed, 5 are people on
+or beside stairs and ghats.
+
+Three prompt changes were measured on both sets and **none was kept**:
+
+| Held-out set | Recall | False alarms per image | Clear scenes warned |
+| --- | --- | --- | --- |
+| **Current prompt** | **72%** | **0.20** | **3 of 12** |
+| Name holes, water and animals in the examples; allow 4 hazards | 90% | 0.66 | 6 of 12 |
+| Say people, animals and vehicles on stairs or in water count too | 85% | 0.52 | 6 of 12 |
+| Same, without naming stairs or water | 78% | 0.12 | 2 of 12 |
+
+Every word added to the prompt was copied onto photos that did not show it: "stairs" was
+invented 21 times in the first version. Allowing 4 hazards made it pad the list with
+repeats. The last version helped the held-out set but on the tuning set lost a hazard and
+had more than three times the false alarms ("stairs" in empty hallways once "open door" was dropped),
+so the gain was not clear enough to ship. Results files: `eval/results.md` and
+`eval/heldout/results.md` are the current prompt.
+
+- Some results are about wording, not sight: a pothole called a "puncture in the road"
+  counts as a miss and a false alarm, because word matching does not link them.
 
 Earlier comparisons below (picture size, other models) were measured on the first 17
-photos and have not been re-run.
+held-out photos and the first 30 tuning images, and have not been re-run.
 
 ### Picture size
 
@@ -458,7 +481,7 @@ above were added.
 
 ### How to read these numbers
 
-- **They are small samples.** 42 labelled hazards and 10 clear scenes in the held-out set
+- **They are small samples.** 60 labelled hazards and 12 clear scenes in the held-out set
   are enough to find failures like the ones above, not to estimate a real-world rate.
 - The photographs were taken by sighted people, mostly in daylight, and are sharper than
   what a phone held by a walking person will see.
@@ -468,28 +491,36 @@ above were added.
 <details>
 <summary>Tuning set, full table, and how the first prompt was fixed</summary>
 
-Model `qwen3-vl:2b-instruct`, 30 images, run 2026-10-14 15:42.
+Model `qwen3-vl:2b-instruct`, 37 images, run 2026-10-15 11:47.
 
-**Missed hazards (false negatives): 1 of 15 labelled hazards.**
+**Missed hazards (false negatives): 6 of 25 labelled hazards.**
 
 | Metric | Value |
 | --- | --- |
-| Images evaluated | 30 (18 scored for hazards, 15 for reading) |
+| Images evaluated | 37 (25 scored for hazards, 15 for reading) |
 | Failed inferences | 0 |
 | Plain-text fallbacks (no validated JSON) | 0 |
-| Hazard recall | 93% (14 of 15) |
-| **Missed hazards** | **1** |
-| False alarms | 3 (0.17 per image) |
-| False-alarm rate (false alarms / all hazards the model reported) | 12% (3 of 26) |
-| Hazard-free images that still got a warning | 2 of 4 |
+| Hazard recall | 76% (19 of 25) |
+| **Missed hazards** | **6** |
+| False alarms | 5 (0.2 per image) |
+| False-alarm rate (false alarms / all hazards the model reported) | 14% (5 of 37) |
+| Hazard-free images that still got a warning | 4 of 6 |
 | Text read correctly (similarity >= 80%) | 14 of 15 |
 | Mean text similarity | 0.975 |
-| Median model latency | 2948 ms |
-| p95 model latency | 5369 ms (33 inferences) |
+| Median model latency | 1960 ms |
+| p95 model latency | 2872 ms (40 inferences) |
 
 Missed hazards, by image:
 
 - `trip_hazard_pavement.jpg`: uneven pavement
+- `flooded_handpump_chennai.jpg`: hand pump
+- `flooded_street_dibrugarh.jpg`: pillar
+- `flooded_street_mumbai.jpg`: vehicle
+- `ghat_steps_varanasi.jpg`: person
+- `station_stairs_ernakulam.jpg`: person
+
+Before the 7 photos moved over from the held-out set, the 30 original images gave 93%
+(14 of 15).
 
 The first real run used the prompt exactly as first written. The model repeated the
 example hazards from the system prompt ("stairs, open door, wet floor, moving people")
@@ -568,9 +599,9 @@ inspected.
 
 <!-- LIMITATIONS-MEASURED -->
 - **It can invent or miss things.** A 2-billion-parameter model hallucinates. On photos
-  it was never tuned on it found 29 of 42 hazards (69%), often left out people on stairs
-  and obstacles standing in flood water, and warned on 4 of 10 clear scenes, sometimes
-  about an "open door" that was not there. See section 14.
+  it was never tuned on it found 43 of 60 hazards (72%), often left out people on stairs,
+  and warned on 3 of 12 clear scenes, sometimes about an "open door" that was not there.
+  See section 14.
 - **Money mode can be wrong.** It got 17 of 18 test images right, but on a messy pile of
   notes it named values that were not there. Count important amounts another way too.
   It does not check whether a note is genuine.
