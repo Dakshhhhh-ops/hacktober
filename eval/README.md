@@ -12,6 +12,11 @@ pipeline the app uses, then writes:
 
 Ollama must be running with the configured model. Nothing here is mocked.
 
+When the object detector is installed, Surroundings answers are scored as the app gives
+them: the vision model's hazards plus the nearest person, vehicle or animal of each kind
+the detector found and the model left out (`detector_added` in `results.json`). Add
+`--no-detector` to score the vision model alone; the first line of `results.md` says which.
+
 ## The three image sets
 
 | Set | Run it with |

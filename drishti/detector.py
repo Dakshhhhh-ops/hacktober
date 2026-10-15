@@ -275,3 +275,19 @@ def handles(phrase: str) -> bool:
 def missing_from(model_hazards: list[Hazard], detected: list[Hazard]) -> list[Hazard]:
     """Detected hazards the vision model did not mention at all."""
     return [h for h in detected if not any(_mentions(m.what, h.what) for m in model_hazards)]
+
+
+def add_to_scene(model_hazards: list[Hazard], detections: list[Detection]) -> list[Hazard]:
+    """What the detector adds to a Surroundings answer: the nearest of each kind of thing
+    the vision model left out.
+
+    The vision model often says "stairs" or "flooded street" and leaves out the people on
+    the stairs or the car in the water; the detector rarely misses them. One per kind, so
+    a crowd on a ghat is one warning, not one for each side.
+    """
+    added, kinds = [], set()
+    for hazard in missing_from(model_hazards, hazards(detections)):
+        if hazard.what not in kinds:
+            kinds.add(hazard.what)
+            added.append(hazard)
+    return added

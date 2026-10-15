@@ -60,6 +60,17 @@ class HazardTests(unittest.TestCase):
                     Hazard(what="vehicle", where="left", distance="mid")]
         self.assertEqual([h.what for h in detector.missing_from(model, detected)], ["vehicle"])
 
+    def test_a_scene_gets_the_nearest_of_each_kind_the_model_left_out(self):
+        model = [Hazard(what="stairs", where="ahead", distance="near"),
+                 Hazard(what="stray dog", where="left", distance="mid")]
+        found = [box("person", 0.0, 0.3, 0.3, 0.6),      # mid, left
+                 box("person", 0.4, 0.1, 0.6, 0.95),     # near, ahead: the one kept
+                 box("person", 0.7, 0.3, 1.0, 0.6),      # mid, right
+                 box("dog", 0.4, 0.3, 0.6, 0.6)]         # the model said "stray dog"
+        self.assertEqual([(h.what, h.where, h.distance)
+                          for h in detector.add_to_scene(model, found)],
+                         [("person", "ahead", "near")])
+
 
 @unittest.skipIf(np is None, "OpenCV and numpy are not installed")
 class DecodeTests(unittest.TestCase):

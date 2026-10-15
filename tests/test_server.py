@@ -4,7 +4,8 @@ import json
 import unittest
 from unittest import mock
 
-from drishti import server, vlm
+from drishti import detector, server, vlm
+from drishti.detector import Detection
 from drishti.schema import FindResult, Scene
 
 JPEG = base64.b64encode(b"\xff\xd8\xff\xe0" + b"0" * 64).decode()
@@ -236,3 +237,27 @@ class WalkGroundCheckTests(unittest.TestCase):
         with mock.patch.object(vlm, "describe", return_value=result(scene=scene)):
             response = server.describe(server.DescribeRequest(image=JPEG))
         self.assertEqual(response.speech.hazards, ["Careful: stray cow ahead, near."])
+
+
+class DetectorInSurroundingsTests(unittest.TestCase):
+    SCENE = Scene.model_validate_json(json.dumps({
+        "hazards": [{"what": "stairs", "where": "ahead", "distance": "near"}],
+        "objects": [], "text": [], "summary": "Steps up to a temple."}))
+    CROWD = [Detection("person", 0.9, (0.4, 0.1, 0.6, 0.95)),
+             Detection("person", 0.9, (0.7, 0.3, 1.0, 0.6))]
+
+    def describe(self, **fields):
+        server.repeats = server.RepeatFilter(20)
+        with mock.patch.object(vlm, "describe", return_value=result(scene=self.SCENE)), \
+                mock.patch.object(detector, "available", return_value=True), \
+                mock.patch.object(detector, "detect", return_value=self.CROWD):
+            return server.describe(server.DescribeRequest(image=JPEG, **fields))
+
+    def test_people_the_model_left_out_are_added_once(self):
+        response = self.describe()
+        self.assertEqual([c.what for c in response.scene.hazards], ["stairs", "person"])
+        self.assertIn("Careful: person ahead, near.", response.speech.hazards)
+
+    def test_other_modes_are_left_alone(self):
+        response = self.describe(mode="read")
+        self.assertEqual([c.what for c in response.scene.hazards], ["stairs"])

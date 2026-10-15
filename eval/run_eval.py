@@ -140,8 +140,7 @@ def evaluate(rows: list[dict], images_dir: Path, describe=vlm.describe, detect=N
                 item["status"] = scene.status
                 item["hazards_predicted"] = [h.what for h in scene.scene.hazards]
                 if detect is not None:
-                    added = detector.missing_from(scene.scene.hazards,
-                                                  detector.hazards(detect(image_bytes)))
+                    added = detector.add_to_scene(scene.scene.hazards, detect(image_bytes))
                     item["detector_added"] = [h.what for h in added]
                     item["hazards_predicted"] += item["detector_added"]
                 item["summary"] = scene.scene.summary
@@ -217,12 +216,13 @@ def _show(value, suffix="") -> str:
     return "n/a" if value is None else f"{value}{suffix}"
 
 
-def to_markdown(summary: dict, results: list[dict], model: str) -> str:
+def to_markdown(summary: dict, results: list[dict], model: str, with_detector: bool = False) -> str:
     s = summary
     recall = "n/a" if s["hazard_recall"] is None else f"{s['hazard_recall']:.0%}"
     rate = "n/a" if s["false_alarm_rate"] is None else f"{s['false_alarm_rate']:.0%}"
     lines = [
-        f"Model `{model}`, {s['images']} images, run {datetime.now():%Y-%m-%d %H:%M}.",
+        f"Model `{model}`{' plus the object detector, as the app uses them' if with_detector else ''}, "
+        f"{s['images']} images, run {datetime.now():%Y-%m-%d %H:%M}.",
         "",
         f"**Missed hazards (false negatives): {s['hazards_missed']} of {s['hazards_labelled']} labelled hazards.**",
         "",
@@ -263,8 +263,9 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=ROOT / "eval")
     parser.add_argument("--max-side", type=int, default=0,
                         help="resize each image as the page does (the page uses 768)")
-    parser.add_argument("--detector", action="store_true",
-                        help="add the object detector's hazards, as the app does")
+    parser.add_argument("--no-detector", action="store_true",
+                        help="score the vision model alone, without the object detector's "
+                             "people, vehicles and animals that the app adds")
     args = parser.parse_args()
 
     with args.labels.open(newline="", encoding="utf-8-sig") as f:
@@ -276,15 +277,17 @@ def main() -> None:
         sys.exit(f"{message} {fix}")
 
     print(f"Evaluating {len(rows)} images with {config.MODEL} ...")
-    if args.detector and not detector.available():
-        sys.exit(f"The object detector is not installed: {config.DETECTOR_MODEL}")
-    results = evaluate(rows, args.images, detect=detector.detect if args.detector else None,
+    use_detector = not args.no_detector and detector.available()
+    if not args.no_detector and not use_detector:
+        print(f"The object detector is not installed ({config.DETECTOR_MODEL}): scoring the "
+              "vision model alone.")
+    results = evaluate(rows, args.images, detect=detector.detect if use_detector else None,
                        max_side=args.max_side)
     summary = summarise(results)
     (args.out / "results.json").write_text(
         json.dumps({"model": config.MODEL, "summary": summary, "images": results}, indent=2,
                    ensure_ascii=False), encoding="utf-8")
-    markdown = to_markdown(summary, results, config.MODEL)
+    markdown = to_markdown(summary, results, config.MODEL, use_detector)
     (args.out / "results.md").write_text(markdown, encoding="utf-8")
     print("\n" + markdown)
     print(f"Saved {args.out / 'results.json'} and {args.out / 'results.md'}")

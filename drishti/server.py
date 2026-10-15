@@ -154,6 +154,14 @@ def describe(request: DescribeRequest):
         ground = [h for h in result.scene.hazards if not detector.handles(h.what)]
         result.scene = result.scene.model_copy(update={"hazards": ground, "objects": [],
                                                        "text": [], "summary": ""})
+    elif request.mode == "surroundings" and detector.available():
+        # The vision model often leaves out the people on a staircase or the car in a
+        # flooded street; the detector adds them in a few milliseconds.
+        added = detector.add_to_scene(result.scene.hazards,
+                                      detector.detect(base64.b64decode(image)))
+        if added:
+            result.scene = result.scene.model_copy(
+                update={"hazards": result.scene.hazards + added})
 
     hazards, rest = build_speech(result.scene, request.mode, request.lang, request.target,
                                  result.find_result, fallback=result.status == "fallback",

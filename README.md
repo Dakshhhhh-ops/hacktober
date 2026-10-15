@@ -14,6 +14,7 @@ Best Open-Source AI Project track. *Drishti* (दृष्टि) is Hindi for s
 ## 1. What it does
 
 - **Surroundings**: describes the scene, warning about physical hazards before anything else.
+  A fast object detector adds any person, vehicle or animal the description left out.
 - **Read**: reads visible text such as signs, labels and packaging.
 - **Find**: you name an object; it answers found, not found or uncertain, with a rough location.
   For about 50 everyday things (a bottle, a cup, a phone, a bag, a chair, a laptop) it
@@ -229,9 +230,11 @@ What it can and cannot do:
   for the Surroundings answer), and earlier versions copied the example words in the
   prompt ("pothole", "steps down") onto empty corridors. It was dropped.
 - Distance is a guess from how much of the picture an object fills.
-- Adding its detections to the Surroundings answers was measured and did not help: on
-  both evaluation sets it found nothing the vision-language model had missed, and it
-  called red-and-white plastic barriers a train. So it is used only for walk mode.
+- It also fills in Surroundings answers: the nearest person, vehicle or animal of each kind
+  that the vision-language model left out is added to the warnings (trains are never
+  added: it called red-and-white plastic barriers a train). On the first, smaller
+  evaluation sets this added nothing; on the larger ones it raised held-out recall from
+  72% to 82% (see section 14).
 
 ### Live Find
 
@@ -364,20 +367,28 @@ There are three image sets. The label format, matching rules and metric definiti
 <!-- EVAL-RESULTS-START -->
 ### Results for the default model
 
-| `qwen3-vl:2b-instruct` | Tuning | **Held-out** | Currency |
+Surroundings answers are scored as the app gives them: the vision model's hazards plus the
+people, vehicles and animals the object detector adds (`--no-detector` scores the model
+alone).
+
+| `qwen3-vl:2b-instruct` + detector | Tuning | **Held-out** | Currency |
 | --- | --- | --- | --- |
-| Hazards found (recall) | 76% (19 of 25) | **72% (43 of 60)** | |
-| **Missed hazards** | **6** | **17** | |
-| Clear scenes that still got a warning | 4 of 6 | 3 of 12 | |
-| False alarms per image | 0.20 | 0.20 | |
+| Hazards found (recall) | 92% (23 of 25) | **82% (49 of 60)** | |
+| **Missed hazards** | **2** | **11** | |
+| Clear scenes that still got a warning | 5 of 6 | 3 of 12 | |
+| False alarms per image | 0.36 | 0.22 | |
 | Text read correctly | 14 of 15 | 2 of 2 | |
 | Money: denominations exactly right | | | 17 of 18 |
 | **Money: said a value that is not there** | | | **1** |
 | Plain-text fallbacks (no validated JSON) | 0 | 0 | 0 |
-| Median / p95 model latency | 2.0 / 2.9 s | 2.5 / 3.3 s | 1.8 s |
+| Median / p95 model latency | 2.2 / 3.1 s | 2.8 / 3.4 s | 1.8 s |
 
-Missed on the tuning set: uneven paving, and 5 hazards in the photos moved there from the
-held-out set (see below). The wrong money value was on a photo of a messy pile
+Missed on the tuning set: uneven paving and a concrete post in flood water. Missed on the
+held-out set, among others: an auto-rickshaw down a muddy lane, a hammock across a
+footpath, a fallen power line in a flooded street, and lamps and flowers laid on a ghat.
+Most false alarms are the vision model's own ("open door" on outdoor scenes, "stairs" in
+empty hallways); 2 came from the detector (a far-off person, seagulls taken for an
+animal). The wrong money value was on a photo of a messy pile
 of ₹100 and ₹2000 notes, where it also said ₹200 and ₹500. Full tables:
 [tuning](eval/results.md), [held-out](eval/heldout/results.md),
 [currency](eval/compare/qwen3-vl-2b-instruct/currency/results.md).
@@ -430,8 +441,21 @@ Every word added to the prompt was copied onto photos that did not show it: "sta
 invented 21 times in the first version. Allowing 4 hazards made it pad the list with
 repeats. The last version helped the held-out set but on the tuning set lost a hazard and
 had more than three times the false alarms ("stairs" in empty hallways once "open door" was dropped),
-so the gain was not clear enough to ship. Results files: `eval/results.md` and
-`eval/heldout/results.md` are the current prompt.
+so the gain was not clear enough to ship.
+
+What did work was not a prompt change. The object detector, already used by walk mode,
+found the people on those stairs and the cars in that water. Adding to each Surroundings
+answer the nearest person, vehicle or animal of each kind that the model left out:
+
+| | Tuning recall | Held-out recall | Held-out false alarms per image | Held-out clear scenes warned |
+| --- | --- | --- | --- | --- |
+| Vision model alone | 76% | 72% | 0.20 | 3 of 12 |
+| **With the detector** | **92%** | **82%** | 0.22 | 3 of 12 |
+
+The idea came from the held-out failures, but nothing was tuned on them: the detector's
+thresholds and walk mode's distance rules are unchanged. Adding one warning per direction
+instead of one per kind gave the same held-out recall with more repeats ("person" left, ahead and
+right on a ghat), so one per kind was kept.
 
 - Some results are about wording, not sight: a pothole called a "puncture in the road"
   counts as a miss and a false alarm, because word matching does not link them.
@@ -491,36 +515,33 @@ above were added.
 <details>
 <summary>Tuning set, full table, and how the first prompt was fixed</summary>
 
-Model `qwen3-vl:2b-instruct`, 37 images, run 2026-10-15 11:47.
+Model `qwen3-vl:2b-instruct` plus the object detector, as the app uses them, 37 images,
+run 2026-10-15 12:39.
 
-**Missed hazards (false negatives): 6 of 25 labelled hazards.**
+**Missed hazards (false negatives): 2 of 25 labelled hazards.**
 
 | Metric | Value |
 | --- | --- |
 | Images evaluated | 37 (25 scored for hazards, 15 for reading) |
 | Failed inferences | 0 |
 | Plain-text fallbacks (no validated JSON) | 0 |
-| Hazard recall | 76% (19 of 25) |
-| **Missed hazards** | **6** |
-| False alarms | 5 (0.2 per image) |
-| False-alarm rate (false alarms / all hazards the model reported) | 14% (5 of 37) |
-| Hazard-free images that still got a warning | 4 of 6 |
+| Hazard recall | 92% (23 of 25) |
+| **Missed hazards** | **2** |
+| False alarms | 9 (0.36 per image) |
+| False-alarm rate (false alarms / all hazards reported) | 18% (9 of 49) |
+| Hazard-free images that still got a warning | 5 of 6 |
 | Text read correctly (similarity >= 80%) | 14 of 15 |
 | Mean text similarity | 0.975 |
-| Median model latency | 1960 ms |
-| p95 model latency | 2872 ms (40 inferences) |
+| Median model latency | 2198 ms |
+| p95 model latency | 3101 ms (40 inferences) |
 
 Missed hazards, by image:
 
 - `trip_hazard_pavement.jpg`: uneven pavement
-- `flooded_handpump_chennai.jpg`: hand pump
 - `flooded_street_dibrugarh.jpg`: pillar
-- `flooded_street_mumbai.jpg`: vehicle
-- `ghat_steps_varanasi.jpg`: person
-- `station_stairs_ernakulam.jpg`: person
 
-Before the 7 photos moved over from the held-out set, the 30 original images gave 93%
-(14 of 15).
+The vision model alone, on the same 37 images, found 19 of 25 (76%). Before the 7 photos
+moved over from the held-out set, the 30 original images gave 93% (14 of 15).
 
 The first real run used the prompt exactly as first written. The model repeated the
 example hazards from the system prompt ("stairs, open door, wet floor, moving people")
@@ -599,9 +620,9 @@ inspected.
 
 <!-- LIMITATIONS-MEASURED -->
 - **It can invent or miss things.** A 2-billion-parameter model hallucinates. On photos
-  it was never tuned on it found 43 of 60 hazards (72%), often left out people on stairs,
-  and warned on 3 of 12 clear scenes, sometimes about an "open door" that was not there.
-  See section 14.
+  it was never tuned on it found 49 of 60 hazards (82%, with the object detector's help),
+  missed things like a hammock across a footpath and a fallen power line, and warned on
+  3 of 12 clear scenes, sometimes about an "open door" that was not there. See section 14.
 - **Money mode can be wrong.** It got 17 of 18 test images right, but on a messy pile of
   notes it named values that were not there. Count important amounts another way too.
   It does not check whether a note is genuine.
