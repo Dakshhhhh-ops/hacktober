@@ -17,12 +17,14 @@ Ollama must be running with the configured model. Nothing here is mocked.
 | Set | Run it with |
 | --- | --- |
 | Tuning, 30 images | `python eval/run_eval.py` |
-| Held-out, 17 images | `python eval/run_eval.py --images eval/heldout/images --labels eval/heldout/labels.csv --out eval/heldout` |
+| Held-out, 39 images | `python eval/run_eval.py --images eval/heldout/images --labels eval/heldout/labels.csv --out eval/heldout` |
 | Currency, 18 images | `python eval/run_eval.py --images eval/currency/images --labels eval/currency/labels.csv --out eval/currency` |
 
 The held-out photos were chosen and labelled after the prompts were written, and must not
 be used to tune them: once a prompt is changed because of a held-out image, that image
-belongs in the tuning set. Labels may still be corrected when they are wrong, openly:
+belongs in the tuning set. 22 photos were added on 15 October 2026 (the last 22 rows of
+`heldout/labels.csv`), labelled by looking at each one before the model was run on them.
+Labels may still be corrected when they are wrong, openly:
 
 - 15 October 2026, `station_board_hapur.jpg`: the small line "H.T. FROM M.S.L. 213.81M"
   had been left out as too small to read, but it is readable and the model read it
